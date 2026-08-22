@@ -49,6 +49,10 @@ coverage/
 # Binary files (yt-dlp and ffmpeg should be downloaded by users or CI)
 *.exe
 dll/
+bin/win32/
+bin/darwin/
+bin/linux/
+!bin/download-deps.sh
 
 # Temporary files
 *.tmp

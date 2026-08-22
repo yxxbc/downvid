@@ -80,6 +80,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 更新检查
   checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
+  downloadUpdate: () => ipcRenderer.invoke('app:downloadUpdate'),
+  installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
+
+  // 更新状态监听
+  onUpdateStatus: (callback: (data: any) => void) => {
+    const handler = (_: any, data: any) => callback(data)
+    ipcRenderer.on('update:status', handler)
+    return () => {
+      ipcRenderer.off('update:status', handler)
+    }
+  },
   
   // 菜单事件监听
   onMenuShowAbout: (callback: () => void) => {

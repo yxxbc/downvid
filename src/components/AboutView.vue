@@ -18,7 +18,7 @@
           
           <!-- App Info -->
           <div class="flex-1 min-w-0">
-            <h2 class="font-headline text-xl font-bold text-on-surface">Videdown</h2>
+            <h2 class="font-headline text-xl font-bold text-on-surface">DownVid</h2>
             <p class="text-on-surface-variant text-sm mt-0.5">v{{ appVersion }}</p>
           </div>
           
@@ -55,7 +55,7 @@
       <!-- Description -->
       <div class="bg-surface-container-low rounded-xl p-5 mb-6 border border-outline-variant/10">
         <p class="text-sm text-on-surface-variant leading-relaxed">
-          Videdown 是一款开源的视频下载工具，基于 YT-DLP 开发，支持抖音、B站、YouTube 等多个平台的视频下载。
+          DownVid 是一款开源的视频下载工具，基于 YT-DLP 开发，支持抖音、B站、YouTube 等多个平台的视频下载。
         </p>
       </div>
       
@@ -89,7 +89,7 @@
       <!-- Links -->
       <div class="space-y-3 mb-6">
         <button 
-          @click="openExternal('https://github.com/cshuangyy/videdown')"
+          @click="openExternal('https://github.com/yxxbc/downvid')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-container-low hover:bg-surface-container-highest transition-colors group border border-outline-variant/10 text-left"
         >
           <div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center group-hover:bg-surface transition-colors">
@@ -97,13 +97,13 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-on-surface">GitHub</p>
-            <p class="text-xs text-on-surface-variant truncate">github.com/cshuangyy/videdown</p>
+            <p class="text-xs text-on-surface-variant truncate">github.com/yxxbc/downvid</p>
           </div>
           <MaterialIcon name="arrow_forward_ios" :size="14" class="text-on-surface-variant" />
         </button>
         
         <button 
-          @click="openExternal('https://github.com/cshuangyy/videdown/issues')"
+          @click="openExternal('https://github.com/yxxbc/downvid/issues')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-container-low hover:bg-surface-container-highest transition-colors group border border-outline-variant/10 text-left"
         >
           <div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center group-hover:bg-surface transition-colors">
@@ -140,7 +140,8 @@
       
       <!-- Copyright -->
       <div class="text-center pt-4">
-        <p class="text-xs text-on-surface-variant/60">© 2026 Videdown</p>
+        <p class="text-xs text-on-surface-variant/60">© 2026 DownVid</p>
+        <p class="text-xs text-on-surface-variant/40 mt-1">Based on <a href="https://github.com/cshuangyy/videdown" class="hover:underline">Videdown</a> by cshuangyy (MIT License)</p>
       </div>
     </div>
   </div>
