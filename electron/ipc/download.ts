@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { spawn } from 'node:child_process'
+import { spawn, exec } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { getYtDlpPath, getFfmpegPath, checkJsRuntime } from '../utils/binary'
@@ -298,7 +298,6 @@ export function registerDownloadIpc() {
       if (download.setPaused) download.setPaused(true)
       download.child.kill()
       if (process.platform === 'win32' && download.child.pid) {
-        const { exec } = require('child_process')
         exec(`taskkill /pid ${download.child.pid} /T /F`, () => {})
       }
       return true

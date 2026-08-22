@@ -1,8 +1,5 @@
-packages:
-  - '.'
-
-ignoredBuiltDependencies:
-  - bufferutil
-  - electron
-  - esbuild
-  - utf-8-validate
+allowBuilds:
+  bufferutil: true
+  electron: true
+  esbuild: true
+  utf-8-validate: true
