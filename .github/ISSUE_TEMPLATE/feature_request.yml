@@ -1,0 +1,41 @@
+name: 功能请求
+description: 提出一个新功能建议
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        有好的想法？告诉我们！
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 功能描述
+      placeholder: 简洁描述你想要的功能
+    validations:
+      required: true
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: 使用场景
+      placeholder: 这个功能解决什么问题？在什么情况下需要用到？
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案
+      placeholder: 你是否尝试过其他方式达到同样效果？
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 确认
+      options:
+        - label: 我已搜索过现有 Issue，没有重复
+          required: true
