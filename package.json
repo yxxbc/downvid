@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "现代化的视频下载工具",
-  "author": "DownVid",
+  "author": "DownVid <downvid@example.com>",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build && electron-builder --config electron-builder.json5",
