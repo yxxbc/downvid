@@ -38,7 +38,6 @@ export function parseWithYtdlp(url: string, cookiesFile?: string): Promise<any> 
   return new Promise(async (resolve, reject) => {
     const ytdlpPath = getYtDlpPath()
     const isYoutube = url.includes('youtube.com') || url.includes('youtu.be')
-    const isBilibili = url.includes('bilibili.com') || url.includes('b23.tv')
 
     const args: string[] = [
       '--no-playlist',
@@ -66,21 +65,14 @@ export function parseWithYtdlp(url: string, cookiesFile?: string): Promise<any> 
         const isNode = runtimePath.includes('node')
         args.push('--js-runtimes', `${isNode ? 'node' : 'deno'}:${runtimePath}`)
       }
-      if (cookiesFile && fs.existsSync(cookiesFile)) {
-        args.push('--cookies', cookiesFile)
-      } else {
-        const browser = getAvailableBrowser()
-        if (browser) args.push('--cookies-from-browser', browser)
-      }
     }
 
-    if (isBilibili) {
-      if (cookiesFile && fs.existsSync(cookiesFile)) {
-        args.push('--cookies', cookiesFile)
-      } else {
-        const browser = getAvailableBrowser()
-        if (browser) args.push('--cookies-from-browser', browser)
-      }
+    // 所有平台都支持 cookies：优先手动导入，否则自动从浏览器读取
+    if (cookiesFile && fs.existsSync(cookiesFile)) {
+      args.push('--cookies', cookiesFile)
+    } else {
+      const browser = getAvailableBrowser()
+      if (browser) args.push('--cookies-from-browser', browser)
     }
 
     args.push(url)

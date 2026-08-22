@@ -42,6 +42,9 @@ window.addEventListener('navigate-to-settings', () => {
 let unsubscribeMenu: (() => void) | null = null
 
 onMounted(() => {
+  // 通知 preload 移除启动加载动画
+  window.postMessage({ payload: 'removeLoading' }, '*')
+
   if (window.electronAPI?.onMenuShowAbout) {
     unsubscribeMenu = window.electronAPI.onMenuShowAbout(() => {
       currentTab.value = 'about'

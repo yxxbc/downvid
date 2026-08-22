@@ -78,6 +78,66 @@
         </div>
       </div>
 
+      <!-- Contributors -->
+      <div class="mb-6">
+        <h3 class="text-xs font-medium text-on-surface-variant uppercase tracking-wider mb-3">贡献者</h3>
+        <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
+          <!-- Loading -->
+          <div v-if="contributorsLoading" class="flex flex-col items-center justify-center py-8">
+            <MaterialIcon name="sync" :size="28" class="text-primary animate-spin mb-2" />
+            <p class="text-xs text-on-surface-variant">加载贡献者中...</p>
+          </div>
+
+          <!-- Error -->
+          <div v-else-if="contributorsError" class="flex flex-col items-center justify-center py-8">
+            <MaterialIcon name="error_outline" :size="28" class="text-on-surface-variant mb-2" />
+            <p class="text-xs text-on-surface-variant text-center mb-3">{{ contributorsError }}</p>
+            <button
+              class="text-xs text-primary hover:text-primary/80 underline underline-offset-2"
+              @click="loadContributors"
+            >
+              重试
+            </button>
+          </div>
+
+          <!-- Success -->
+          <div v-else-if="contributors.length > 0" class="flex flex-col gap-3">
+            <div class="flex flex-wrap gap-3 justify-center">
+              <div
+                v-for="c in contributors"
+                :key="c.login"
+                class="group relative w-14 h-14 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-primary/40 transition-all cursor-pointer"
+                :title="`${c.login} · ${c.contributions} 次贡献`"
+                @click="openExternal(c.htmlUrl)"
+              >
+                <img
+                  :src="c.avatarUrl"
+                  :alt="c.login"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <!-- Hover tooltip -->
+                <div class="absolute -bottom-9 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-on-surface text-surface text-[11px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  {{ c.login }}
+                </div>
+              </div>
+            </div>
+            <div v-if="contributorsWarning" class="text-center">
+              <span class="text-[11px] text-on-surface-variant/70">{{ contributorsWarning }}</span>
+            </div>
+            <div class="text-center pt-1">
+              <span class="text-xs text-on-surface-variant">共 {{ contributors.length }} 位贡献者</span>
+            </div>
+          </div>
+
+          <!-- Empty -->
+          <div v-else class="flex flex-col items-center justify-center py-8">
+            <MaterialIcon name="people_outline" :size="28" class="text-on-surface-variant mb-2" />
+            <p class="text-xs text-on-surface-variant">暂无贡献者</p>
+          </div>
+        </div>
+      </div>
+
       <!-- License -->
       <div class="flex items-center justify-between py-4 border-t border-outline-variant/20">
         <div class="flex items-center gap-2">
@@ -94,24 +154,58 @@
       </div>
     </div>
 
-    <!-- Update Drawer -->
-    <UpdateDrawer :visible="showUpdateDrawer" @close="showUpdateDrawer = false" />
+    <!-- Update Modal -->
+    <UpdateModal :visible="showUpdateDrawer" @close="showUpdateDrawer = false" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
-import UpdateDrawer from './UpdateDrawer.vue'
+import UpdateModal from './UpdateModal.vue'
+
+interface Contributor {
+  login: string
+  avatarUrl: string
+  htmlUrl: string
+  contributions: number
+}
 
 const appVersion = ref('1.0.0')
 const showUpdateDrawer = ref(false)
+
+const contributors = ref<Contributor[]>([])
+const contributorsLoading = ref(false)
+const contributorsError = ref('')
+const contributorsWarning = ref('')
+
+async function loadContributors() {
+  contributorsLoading.value = true
+  contributorsError.value = ''
+  contributorsWarning.value = ''
+  try {
+    const result = await window.electronAPI?.app?.getContributors?.()
+    if (result?.success && result.data) {
+      contributors.value = result.data
+      if (result.warning) contributorsWarning.value = result.warning
+    } else {
+      contributorsError.value = result?.error || '加载失败'
+    }
+  } catch (e) {
+    contributorsError.value = e instanceof Error ? e.message : '加载失败'
+  } finally {
+    contributorsLoading.value = false
+  }
+}
 
 onMounted(async () => {
   try {
     const version = await window.electronAPI?.app?.getVersion?.()
     if (version) appVersion.value = version
   } catch {}
+
+  // 加载贡献者
+  loadContributors()
 })
 
 async function openExternal(url: string) {

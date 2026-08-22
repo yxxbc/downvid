@@ -1,5 +1,50 @@
 import { getChromiumPath } from '../utils/browser'
 import { promptChromeDownload } from './ytdlp'
+import fs from 'node:fs'
+
+// 解析 Netscape 格式的 cookies.txt
+interface CookieItem {
+  domain: string
+  includeSubdomains: boolean
+  path: string
+  secure: boolean
+  expiry: number
+  name: string
+  value: string
+}
+
+function parseCookiesFile(filePath: string): CookieItem[] {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8')
+    const cookies: CookieItem[] = []
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      const parts = trimmed.split('\t')
+      if (parts.length < 7) continue
+      cookies.push({
+        domain: parts[0],
+        includeSubdomains: parts[1] === 'TRUE',
+        path: parts[2],
+        secure: parts[3] === 'TRUE',
+        expiry: parseInt(parts[4]) || 0,
+        name: parts[5],
+        value: parts[6],
+      })
+    }
+    return cookies
+  } catch {
+    return []
+  }
+}
+
+// 从 cookies 构建 Cookie 请求头字符串（过滤抖音相关域名）
+function buildCookieHeader(cookies: CookieItem[]): string {
+  return cookies
+    .filter(c => c.domain.includes('douyin.com') || c.domain.includes('iesdouyin.com') || c.domain.includes('snssdk.com'))
+    .map(c => `${c.name}=${c.value}`)
+    .join('; ')
+}
 
 // 估算文件大小
 function estimateFileSize(height: number, durationMs: number): number {
@@ -67,8 +112,12 @@ function buildFormatsFromBitRate(bitRate: any[], duration: number): any[] {
 }
 
 // 使用直接 API 调用快速解析抖音视频
-export async function parseDouyinWithAPI(url: string): Promise<any> {
+export async function parseDouyinWithAPI(url: string, cookiesFile?: string): Promise<any> {
   let videoId: string | null = null
+
+  // 解析 cookies
+  const cookies = cookiesFile && fs.existsSync(cookiesFile) ? parseCookiesFile(cookiesFile) : []
+  const cookieHeader = buildCookieHeader(cookies)
 
   const videoMatch = url.match(/\/video\/(\d+)/)
   if (videoMatch) {
@@ -82,6 +131,7 @@ export async function parseDouyinWithAPI(url: string): Promise<any> {
         method: 'GET',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          ...(cookieHeader ? { 'Cookie': cookieHeader } : {}),
         },
       })
       const redirectedUrl = response.url
@@ -99,6 +149,7 @@ export async function parseDouyinWithAPI(url: string): Promise<any> {
       'Referer': 'https://www.douyin.com/',
       'Accept': 'application/json',
       'Accept-Language': 'zh-CN,zh;q=0.9',
+      ...(cookieHeader ? { 'Cookie': cookieHeader } : {}),
     },
   })
 
@@ -140,7 +191,7 @@ export async function parseDouyinWithAPI(url: string): Promise<any> {
 }
 
 // 使用无头浏览器解析抖音视频
-export async function parseDouyinWithPuppeteer(url: string): Promise<any> {
+export async function parseDouyinWithPuppeteer(url: string, cookiesFile?: string): Promise<any> {
   const puppeteer = await import('puppeteer-core')
   const chromePath = getChromiumPath()
 
@@ -148,6 +199,19 @@ export async function parseDouyinWithPuppeteer(url: string): Promise<any> {
     await promptChromeDownload()
     throw new Error('未检测到 Chrome 浏览器')
   }
+
+  // 解析 cookies 并转换为 Puppeteer 格式
+  const cookies = cookiesFile && fs.existsSync(cookiesFile) ? parseCookiesFile(cookiesFile) : []
+  const puppeteerCookies = cookies
+    .filter(c => c.domain.includes('douyin.com') || c.domain.includes('iesdouyin.com') || c.domain.includes('snssdk.com'))
+    .map(c => ({
+      name: c.name,
+      value: c.value,
+      domain: c.domain,
+      path: c.path,
+      secure: c.secure,
+      expires: c.expiry > 0 ? c.expiry : -1,
+    }))
 
   const browser = await puppeteer.default.launch({
     headless: true,
@@ -166,6 +230,14 @@ export async function parseDouyinWithPuppeteer(url: string): Promise<any> {
     const page = await browser.newPage()
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     await page.setViewport({ width: 1920, height: 1080 })
+
+    // 设置 cookies（需要先访问域名才能设置）
+    if (puppeteerCookies.length > 0) {
+      try {
+        await page.goto('https://www.douyin.com/', { waitUntil: 'domcontentloaded', timeout: 15000 })
+        await page.setCookie(...puppeteerCookies)
+      } catch {}
+    }
 
     let videoData: any = null
     let renderData: any = null

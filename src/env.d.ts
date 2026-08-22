@@ -14,6 +14,18 @@ interface Window {
     // 应用信息
     app: {
       getVersion: () => Promise<string>
+      getContributors: () => Promise<{
+        success: boolean
+        data?: Array<{
+          login: string
+          avatarUrl: string
+          htmlUrl: string
+          contributions: number
+        }>
+        error?: string
+        fromCache?: boolean
+        warning?: string
+      }>
       getDefaultDownloadDir: () => Promise<string>
       fetchImage: (url: string, referer?: string) => Promise<string>
     }

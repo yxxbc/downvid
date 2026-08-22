@@ -4,7 +4,6 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { setMainWindow } from './store'
 import { createMenu } from './menu'
-import { setupAutoUpdater } from './updater'
 import { registerAppIpc } from './ipc/app'
 import { registerDownloadIpc } from './ipc/download'
 import { registerHistoryIpc } from './ipc/history'
@@ -14,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 process.env.APP_ROOT = path.join(__dirname, '..')
 
-// 禁用 GPU 加速（避免某些机器上 GPU 崩溃）
+// 禁用 GPU 加速
 app.commandLine.appendSwitch('disable-gpu')
 app.commandLine.appendSwitch('disable-software-rasterizer')
 
@@ -26,20 +25,26 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
 
-// 日志文件
-const logFile = path.join(app.getPath('userData'), 'downvid.log')
-function log(msg: string) {
-  const line = `[${new Date().toISOString()}] ${msg}\n`
-  fs.appendFileSync(logFile, line)
-  console.log(line.trim())
+// 日志系统（延迟初始化，确保 app ready 后再获取路径）
+let logFile: string | null = null
+function initLog() {
+  try {
+    logFile = path.join(app.getPath('userData'), 'downvid.log')
+    fs.mkdirSync(path.dirname(logFile), { recursive: true })
+  } catch (e) {
+    console.error('Failed to init log:', e)
+  }
 }
 
-log('=== DownVid 启动 ===')
-log(`APP_ROOT: ${process.env.APP_ROOT}`)
-log(`VITE_DEV_SERVER_URL: ${VITE_DEV_SERVER_URL || 'N/A'}`)
-log(`Platform: ${process.platform} ${process.arch}`)
+function log(msg: string) {
+  const line = `[${new Date().toISOString()}] ${msg}\n`
+  console.log(line.trim())
+  if (logFile) {
+    try { fs.appendFileSync(logFile, line) } catch (e) { console.error('Log write failed:', e) }
+  }
+}
 
-// 全局错误处理
+// 尽早捕获全局错误
 process.on('uncaughtException', (err) => {
   log(`[FATAL] uncaughtException: ${err.message}\n${err.stack}`)
 })
@@ -48,15 +53,13 @@ process.on('unhandledRejection', (reason) => {
   log(`[ERROR] unhandledRejection: ${reason}`)
 })
 
+log(`[BOOT] Main process starting, pid=${process.pid}, platform=${process.platform}, arch=${process.arch}`)
+log(`[BOOT] APP_ROOT=${process.env.APP_ROOT}`)
+log(`[BOOT] VITE_DEV_SERVER_URL=${VITE_DEV_SERVER_URL || 'none (production)'}`)
+
 function createWindow() {
-  log('createWindow 开始')
-
-  const iconPath = process.platform === 'darwin'
-    ? path.join(process.env.APP_ROOT || '', 'ldstore.icns')
-    : path.join(process.env.APP_ROOT || '', 'ldstore.ico')
-
   const preloadPath = path.join(__dirname, 'preload.mjs')
-  log(`preload path: ${preloadPath}, exists: ${fs.existsSync(preloadPath)}`)
+  log(`[WINDOW] Creating window, preload=${preloadPath}`)
 
   const win = new BrowserWindow({
     width: 1200,
@@ -64,94 +67,90 @@ function createWindow() {
     minWidth: 1000,
     minHeight: 700,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    icon: process.platform !== 'darwin' ? iconPath : undefined,
+    icon: process.platform !== 'darwin'
+      ? path.join(process.env.APP_ROOT || '', 'ldstore.ico')
+      : undefined,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: true,
     },
   })
 
   setMainWindow(win)
 
-  win.webContents.on('did-finish-load', () => {
-    log('webContents did-finish-load')
-    win.webContents.send('main-process-message', new Date().toLocaleString())
-  })
-
-  win.webContents.on('did-fail-load', (_e, code, desc) => {
-    log(`webContents did-fail-load: ${code} ${desc}`)
-  })
-
-  // 渲染进程崩溃时不要退出整个应用
-  win.webContents.on('render-process-gone', (_e, details) => {
-    log(`render-process-gone: ${details.reason}`)
-  })
-
   win.on('closed', () => {
-    log('Window closed')
+    log('[WINDOW] Window closed')
+  })
+
+  win.webContents.on('render-process-gone', (_e, details) => {
+    log(`[WINDOW] render-process-gone: reason=${details.reason}, exitCode=${details.exitCode}`)
+  })
+
+  win.webContents.on('did-fail-load', (_e, errorCode, errorDescription, validatedURL) => {
+    log(`[WINDOW] did-fail-load: code=${errorCode}, desc=${errorDescription}, url=${validatedURL}`)
+  })
+
+  win.webContents.on('did-finish-load', () => {
+    log('[WINDOW] did-finish-load')
   })
 
   if (VITE_DEV_SERVER_URL) {
-    log(`Loading URL: ${VITE_DEV_SERVER_URL}`)
-    win.loadURL(VITE_DEV_SERVER_URL).catch((err) => {
-      log(`loadURL error: ${err.message}`)
-    })
+    log(`[WINDOW] Loading URL: ${VITE_DEV_SERVER_URL}`)
+    win.loadURL(VITE_DEV_SERVER_URL)
   } else {
     const indexPath = path.join(RENDERER_DIST, 'index.html')
-    log(`Loading file: ${indexPath}, exists: ${fs.existsSync(indexPath)}`)
-    win.loadFile(indexPath).catch((err) => {
-      log(`loadFile error: ${err.message}`)
-    })
+    log(`[WINDOW] Loading file: ${indexPath}`)
+    win.loadFile(indexPath)
   }
-
-  log('createWindow 完成')
 }
 
-// 注册所有 IPC 处理程序
+// 注册 IPC
 registerAppIpc()
 registerDownloadIpc()
 registerHistoryIpc()
 registerSystemIpc()
-log('IPC handlers registered')
 
 // App 生命周期
 app.on('window-all-closed', () => {
-  log('window-all-closed')
+  log('[LIFECYCLE] All windows closed')
   if (process.platform !== 'darwin') {
+    log('[LIFECYCLE] Quitting app (non-macOS)')
     app.quit()
   }
 })
 
 app.on('activate', () => {
-  log('activate')
+  log('[LIFECYCLE] App activate')
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
 })
 
 app.on('before-quit', () => {
-  log('before-quit')
+  log('[LIFECYCLE] before-quit')
 })
 
 app.on('will-quit', () => {
-  log('will-quit')
+  log('[LIFECYCLE] will-quit')
+})
+
+app.on('quit', (_e, exitCode) => {
+  log(`[LIFECYCLE] quit, exitCode=${exitCode}`)
 })
 
 app.whenReady().then(() => {
-  log('app.whenReady')
+  initLog()
+  log('[LIFECYCLE] app ready')
   createWindow()
   createMenu()
-  setupAutoUpdater()
-  log('Menu and updater initialized')
+  log('[LIFECYCLE] Window and menu created')
 
-  setTimeout(() => {
-    import('electron-updater').then(({ autoUpdater }) => {
-      log('Checking for updates...')
-      autoUpdater.checkForUpdates().catch((err) => {
-        log(`Update check error: ${err.message}`)
-      })
-    })
-  }, 3000)
+  // 心跳日志，帮助定位闪退时间点
+  let heartbeatCount = 0
+  setInterval(() => {
+    heartbeatCount++
+    const windows = BrowserWindow.getAllWindows()
+    log(`[HEARTBEAT] #${heartbeatCount}, windows=${windows.length}, memory=${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`)
+  }, 5000)
 })

@@ -75,8 +75,8 @@ export function registerDownloadIpc() {
     const cookiesFile = args[1] as string | undefined
 
     if (isDouyinUrl(url)) {
-      try { return await parseDouyinWithAPI(url) } catch {
-        try { return await parseDouyinWithPuppeteer(url) } catch {}
+      try { return await parseDouyinWithAPI(url, cookiesFile) } catch {
+        try { return await parseDouyinWithPuppeteer(url, cookiesFile) } catch {}
       }
     }
     if (isKuaishouUrl(url)) {
@@ -108,7 +108,6 @@ export function registerDownloadIpc() {
 
       const ytdlpPath = getYtDlpPath()
       const isYoutube = options.url.includes('youtube.com') || options.url.includes('youtu.be')
-      const isBilibili = options.url.includes('bilibili.com') || options.url.includes('b23.tv')
 
       const userTemplate = options.filenameTemplate || '%(title)s'
       const outputTemplate = path.join(outputDir, `${userTemplate}.%(ext)s`)
@@ -156,21 +155,14 @@ export function registerDownloadIpc() {
           const isNode = runtimePath.includes('node')
           args.push('--js-runtimes', `${isNode ? 'node' : 'deno'}:${runtimePath}`)
         }
-        if (options.cookiesFile && fs.existsSync(options.cookiesFile)) {
-          args.push('--cookies', options.cookiesFile)
-        } else {
-          const browser = getAvailableBrowser()
-          if (browser) args.push('--cookies-from-browser', browser)
-        }
       }
 
-      if (isBilibili) {
-        if (options.cookiesFile && fs.existsSync(options.cookiesFile)) {
-          args.push('--cookies', options.cookiesFile)
-        } else {
-          const browser = getAvailableBrowser()
-          if (browser) args.push('--cookies-from-browser', browser)
-        }
+      // 所有平台都支持 cookies：优先手动导入，否则自动从浏览器读取
+      if (options.cookiesFile && fs.existsSync(options.cookiesFile)) {
+        args.push('--cookies', options.cookiesFile)
+      } else {
+        const browser = getAvailableBrowser()
+        if (browser) args.push('--cookies-from-browser', browser)
       }
 
       args.push(options.url)

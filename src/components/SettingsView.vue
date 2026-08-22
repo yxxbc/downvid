@@ -76,7 +76,7 @@
                 </button>
               </div>
               <p class="text-[11px] text-on-surface-variant">
-                用于下载B站和YouTube 视频。可使用 Chrome 扩展 "Get cookies.txt" 导出
+                用于抖音、B站、YouTube 等需要登录的平台。可使用 Chrome 扩展 "Get cookies.txt" 导出；未设置时将自动从浏览器读取
               </p>
             </div>
           </div>

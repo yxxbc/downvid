@@ -37,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 应用
   app: {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
+    getContributors: () => ipcRenderer.invoke('app:getContributors'),
     getDefaultDownloadDir: () => ipcRenderer.invoke('app:getDefaultDownloadDir'),
     fetchImage: (url: string, referer?: string) => ipcRenderer.invoke('app:fetchImage', url, referer),
   },
