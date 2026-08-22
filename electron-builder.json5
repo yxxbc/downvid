@@ -11,41 +11,6 @@
     "dist",
     "dist-electron"
   ],
-  "extraResources": [
-    // Windows
-    {
-      "from": "./bin/win32/x64/yt-dlp.exe",
-      "to": "./bin/yt-dlp.exe",
-      "filter": ["**/*"]
-    },
-    {
-      "from": "./bin/win32/x64/ffmpeg.exe",
-      "to": "./bin/ffmpeg.exe",
-      "filter": ["**/*"]
-    },
-    // macOS ARM (Apple Silicon)
-    {
-      "from": "./bin/darwin/arm64/yt-dlp",
-      "to": "./bin/yt-dlp",
-      "filter": ["**/*"]
-    },
-    {
-      "from": "./bin/darwin/arm64/ffmpeg",
-      "to": "./bin/ffmpeg",
-      "filter": ["**/*"]
-    },
-    // Linux x64
-    {
-      "from": "./bin/linux/x64/yt-dlp",
-      "to": "./bin/yt-dlp",
-      "filter": ["**/*"]
-    },
-    {
-      "from": "./bin/linux/x64/ffmpeg",
-      "to": "./bin/ffmpeg",
-      "filter": ["**/*"]
-    }
-  ],
   "npmRebuild": false,
   "nodeGypRebuild": false,
   "compression": "maximum",
