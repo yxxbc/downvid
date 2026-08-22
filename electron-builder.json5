@@ -4,7 +4,6 @@
   "appId": "com.downvid.app",
   "asar": true,
   "productName": "DownVid",
-  "icon": "ldstore.ico",
   "directories": {
     "output": "release/${version}"
   },
