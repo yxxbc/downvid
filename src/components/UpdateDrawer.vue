@@ -149,7 +149,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
 
-const props = defineProps<{
+defineProps<{
   visible: boolean
 }>()
 

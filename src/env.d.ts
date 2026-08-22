@@ -54,6 +54,16 @@ interface Window {
       downloadUrl?: string
       error?: string
     }>
+    downloadUpdate: () => Promise<{ success: boolean; error?: string }>
+    installUpdate: () => Promise<void>
+    onUpdateStatus: (callback: (data: {
+      status: 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
+      version?: string
+      releaseNotes?: string
+      percent?: number
+      speed?: number
+      message?: string
+    }) => void) => () => void
     // 菜单事件监听
     onMenuShowAbout: (callback: () => void) => () => void
   }
