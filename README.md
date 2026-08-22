@@ -1,25 +1,37 @@
 <div align="center">
 
-# 🎬 DownVid
-
-**现代化的开源视频下载工具 — 一键下载全网无水印高清视频**
-
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square&logo=opensourceinitiative&logoColor=white)](./LICENSE)
-[![Electron](https://img.shields.io/badge/Electron-30-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
-[![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-2c3e50?style=flat-square&logo=operating-system&logoColor=white)](#)
+<table>
+  <tr>
+    <td width="110" align="center">
+      <img src="src/assets/logo.png" alt="DownVid Logo" width="96" />
+    </td>
+    <td>
+      <h1>DownVid</h1>
+      <p><strong>现代化的开源视频下载工具 — 一键下载全网无水印高清视频</strong></p>
+      <p>
+        <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License" /></a>
+        <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-30-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" /></a>
+        <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white" alt="Vue" /></a>
+        <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+        <a href="https://github.com/yt-dlp/yt-dlp"><img src="https://img.shields.io/badge/yt--dlp-powered-FF0000?style=flat-square&logo=youtube&logoColor=white" alt="yt-dlp" /></a>
+        <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-2c3e50?style=flat-square&logo=operating-system&logoColor=white" alt="Platform" />
+      </p>
+    </td>
+  </tr>
+</table>
 
 <br />
 
-[![Downloads](https://img.shields.io/github/downloads/yxxbc/downvid/total?color=369eff&labelColor=black&logo=github&label=Downloads&style=for-the-badge)](https://github.com/yxxbc/downvid/releases)
-[![Latest Release](https://img.shields.io/github/v/release/yxxbc/downvid?color=369eff&labelColor=black&logo=github&label=Latest%20Release&style=for-the-badge)](https://github.com/yxxbc/downvid/releases/latest)
-[![Stars](https://img.shields.io/github/stars/yxxbc/downvid?color=ffcb2f&labelColor=black&logo=github&label=Stars&style=for-the-badge)](https://github.com/yxxbc/downvid/stargazers)
+<a href="https://github.com/yxxbc/downvid/releases"><img src="https://img.shields.io/github/downloads/yxxbc/downvid/total?color=369eff&labelColor=black&logo=github&label=Downloads&style=for-the-badge" alt="Downloads" /></a>
+<a href="https://github.com/yxxbc/downvid/releases/latest"><img src="https://img.shields.io/github/v/release/yxxbc/downvid?color=369eff&labelColor=black&logo=github&label=Latest%20Release&style=for-the-badge" alt="Latest Release" /></a>
+<a href="https://github.com/yxxbc/downvid/stargazers"><img src="https://img.shields.io/github/stars/yxxbc/downvid?color=ffcb2f&labelColor=black&logo=github&label=Stars&style=for-the-badge" alt="Stars" /></a>
 
+<br />
 <br />
 
 <img src="src/assets/screen.png" alt="DownVid Screenshot" width="98%" />
+
+<br />
 
 > 基于 [Videdown](https://github.com/cshuangyy/videdown) by cshuangyy (MIT License) 二次开发
 
