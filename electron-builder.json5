@@ -65,7 +65,6 @@
         "arch": ["arm64", "x64"]
       }
     ],
-    "icon": "ldstore.ico",
     "artifactName": "${productName}-${arch}-Mac-${version}.${ext}",
     "darkModeSupport": true,
     "hardenedRuntime": true,
@@ -123,7 +122,6 @@
         "arch": ["x64", "arm64"]
       }
     ],
-    "icon": "ldstore.ico",
     "artifactName": "${productName}-${arch}-Linux-${version}.${ext}",
     "category": "Utility",
     "desktop": {
