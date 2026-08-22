@@ -24,17 +24,10 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Download dependencies
-        run: bash bin/download-deps.sh darwin
       - name: Build & Publish
         run: pnpm build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -58,9 +51,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Download dependencies
-        run: bash bin/download-deps.sh win32
-        shell: bash
       - name: Build & Publish
         run: pnpm build:win
         env:
@@ -87,8 +77,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Download dependencies
-        run: bash bin/download-deps.sh linux
       - name: Build & Publish
         run: pnpm build:linux
         env:
@@ -123,21 +111,16 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           VERSION="${TAG#v}"
           
-          # 提取当前版本的更新日志
-          # 匹配 ## [x.y.z] 到下一个 ## [ 或文件末尾
           NOTES=$(awk "/^## \\[${VERSION}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md)
           
-          # 如果没找到精确版本，尝试 Unreleased
           if [ -z "$NOTES" ]; then
             NOTES=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found{print}' CHANGELOG.md)
           fi
           
-          # 如果还是空，用默认描述
           if [ -z "$NOTES" ]; then
             NOTES="DownVid ${TAG} 发布"
           fi
           
-          # 写入多行输出
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

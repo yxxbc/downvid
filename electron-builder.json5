@@ -31,8 +31,7 @@
     ],
     "artifactName": "${productName}-${arch}-Mac-${version}.${ext}",
     "darkModeSupport": true,
-    "hardenedRuntime": true,
-    "gatekeeperAssess": false
+    "identity": null
   },
   "dmg": {
     "contents": [
