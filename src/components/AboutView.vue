@@ -68,22 +68,6 @@
         <p class="text-sm text-on-surface-variant mb-5">
           如果这个项目对你有帮助，可以考虑请作者喝杯咖啡 ☕
         </p>
-        
-        <!-- QR Codes -->
-        <div class="flex gap-6 justify-center">
-          <div class="text-center">
-            <div class="w-32 h-32 rounded-xl bg-surface-container-highest border border-outline-variant/30 overflow-hidden">
-              <img src="../assets/wepay.png" alt="微信支付" class="w-full h-full object-cover">
-            </div>
-            <p class="text-xs text-on-surface-variant mt-2">微信支付</p>
-          </div>
-          <div class="text-center">
-            <div class="w-32 h-32 rounded-xl bg-surface-container-highest border border-outline-variant/30 overflow-hidden">
-              <img src="../assets/alipay.png" alt="支付宝" class="w-full h-full object-cover">
-            </div>
-            <p class="text-xs text-on-surface-variant mt-2">支付宝</p>
-          </div>
-        </div>
       </div>
       
       <!-- Links -->
