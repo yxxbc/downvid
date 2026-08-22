@@ -1,7 +1,6 @@
 import { ipcMain, app } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { GITHUB_OWNER, GITHUB_REPO } from '../constants'
-import { sendToRenderer } from '../store'
 
 export function registerAppIpc() {
   ipcMain.handle('app:getVersion', () => app.getVersion())

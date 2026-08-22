@@ -2,7 +2,7 @@ import { dialog, shell } from 'electron'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import { getYtDlpPath, getFfmpegPath, checkJsRuntime } from '../utils/binary'
+import { getYtDlpPath, checkJsRuntime } from '../utils/binary'
 import { getAvailableBrowser } from '../utils/browser'
 import { LANG_NAMES } from '../constants'
 

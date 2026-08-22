@@ -1,6 +1,5 @@
 import path from 'node:path'
 import fs from 'node:fs'
-import os from 'node:os'
 import { spawn } from 'node:child_process'
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname)
