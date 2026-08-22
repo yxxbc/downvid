@@ -1,5 +1,5 @@
 name: 功能请求
-description: 提出一个新功能建议
+description: 提出新功能或改进建议
 title: "[Feature] "
 labels: ["enhancement"]
 body:
@@ -7,6 +7,20 @@ body:
     attributes:
       value: |
         有好的想法？告诉我们！
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 功能类别
+      options:
+        - 视频下载相关
+        - 界面/交互改进
+        - 新平台支持
+        - 设置/配置
+        - 性能优化
+        - 其他
+    validations:
+      required: true
 
   - type: textarea
     id: description
@@ -20,7 +34,9 @@ body:
     id: usecase
     attributes:
       label: 使用场景
-      placeholder: 这个功能解决什么问题？在什么情况下需要用到？
+      placeholder: |
+        什么情况下你需要这个功能？
+        例: 我经常需要下载 B站合集，但目前只能一个一个下载...
     validations:
       required: false
 
@@ -32,10 +48,18 @@ body:
     validations:
       required: false
 
+  - type: textarea
+    id: mockup
+    attributes:
+      label: 界面草图（可选）
+      placeholder: 如果涉及界面改动，可以画个草图或描述期望的布局
+    validations:
+      required: false
+
   - type: checkboxes
     id: checklist
     attributes:
-      label: 确认
+      label: 提交前确认
       options:
-        - label: 我已搜索过现有 Issue，没有重复
+        - label: 我已搜索现有 Issue，没有重复
           required: true

@@ -1,0 +1,77 @@
+name: 安装/构建问题
+description: 安装、构建、运行环境相关问题
+title: "[安装] "
+labels: ["setup"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        安装或构建过程中遇到的问题请使用此模板。
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: 问题阶段
+      options:
+        - pnpm install 失败
+        - 构建 (build) 失败
+        - 运行 (dev) 失败
+        - 打包 (electron-builder) 失败
+        - 安装后无法启动
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 10
+        - Windows 11
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: node_version
+    attributes:
+      label: Node.js 版本
+      placeholder: 运行 node -v 查看
+    validations:
+      required: true
+
+  - type: input
+    id: pnpm_version
+    attributes:
+      label: pnpm 版本
+      placeholder: 运行 pnpm -v 查看
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_log
+    attributes:
+      label: 错误日志
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已搜索现有 Issue
+          required: true
+        - label: 我已阅读 README 的安装说明
+          required: false
