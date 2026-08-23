@@ -12,8 +12,13 @@ permissions:
 jobs:
   build-mac-arm64:
     runs-on: macos-latest
+    permissions:
+      contents: read
+      lfs: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -24,15 +29,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Cache binaries
-        uses: actions/cache@v4
-        id: cache-bin
-        with:
-          path: bin/
-          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
-      - name: Download binaries
-        if: steps.cache-bin.outputs.cache-hit != 'true'
-        run: pnpm download-deps:mac
       - name: Prepare arm64 binaries
         run: |
           mkdir -p bin
@@ -54,8 +50,13 @@ jobs:
 
   build-mac-x64:
     runs-on: macos-latest
+    permissions:
+      contents: read
+      lfs: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -66,15 +67,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Cache binaries
-        uses: actions/cache@v4
-        id: cache-bin
-        with:
-          path: bin/
-          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
-      - name: Download binaries
-        if: steps.cache-bin.outputs.cache-hit != 'true'
-        run: pnpm download-deps:mac
       - name: Prepare x64 binaries
         run: |
           mkdir -p bin
@@ -96,8 +88,13 @@ jobs:
 
   build-win:
     runs-on: windows-latest
+    permissions:
+      contents: read
+      lfs: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -108,15 +105,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Cache binaries
-        uses: actions/cache@v4
-        id: cache-bin
-        with:
-          path: bin/
-          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
-      - name: Download binaries
-        if: steps.cache-bin.outputs.cache-hit != 'true'
-        run: pnpm download-deps:win
       - name: Prepare binaries
         shell: bash
         run: |
@@ -138,8 +126,13 @@ jobs:
 
   build-linux-x64:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      lfs: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -150,15 +143,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Cache binaries
-        uses: actions/cache@v4
-        id: cache-bin
-        with:
-          path: bin/
-          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
-      - name: Download binaries
-        if: steps.cache-bin.outputs.cache-hit != 'true'
-        run: pnpm download-deps:linux
       - name: Prepare x64 binaries
         run: |
           mkdir -p bin
@@ -182,8 +166,13 @@ jobs:
 
   build-linux-arm64:
     runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      lfs: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -194,15 +183,6 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Cache binaries
-        uses: actions/cache@v4
-        id: cache-bin
-        with:
-          path: bin/
-          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
-      - name: Download binaries
-        if: steps.cache-bin.outputs.cache-hit != 'true'
-        run: pnpm download-deps:linux
       - name: Prepare arm64 binaries
         run: |
           mkdir -p bin
