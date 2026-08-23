@@ -81,11 +81,12 @@ download_ffmpeg() {
   elif [ "$os" = "darwin" ]; then
     local tmpdir=$(mktemp -d)
     if [ "$arch" = "arm64" ]; then
-      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macosarm64-gpl.zip"
     else
-      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macosx64-gpl.zip"
     fi
-    unzip -q -o "$tmpdir/ffmpeg.zip" -d "$dir"
+    unzip -q -o "$tmpdir/ffmpeg.zip" -d "$tmpdir"
+    cp "$tmpdir"/ffmpeg-master-latest-macos*/bin/ffmpeg "$dir/ffmpeg"
     chmod +x "$dir/ffmpeg"
     rm -rf "$tmpdir"
   elif [ "$os" = "linux" ]; then
