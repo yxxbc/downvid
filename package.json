@@ -13,6 +13,8 @@
     "build:linux": "vue-tsc && vite build && electron-builder --linux --config electron-builder.json5",
     "build:mac:arm64": "vue-tsc && vite build && electron-builder --mac --arm64 --config electron-builder.json5",
     "build:mac:x64": "vue-tsc && vite build && electron-builder --mac --x64 --config electron-builder.json5",
+    "build:linux:x64": "vue-tsc && vite build && electron-builder --linux --x64 --config electron-builder.json5",
+    "build:linux:arm64": "vue-tsc && vite build && electron-builder --linux --arm64 --config electron-builder.json5",
     "preview": "vite preview",
     "download-deps": "bash bin/download-deps.sh",
     "download-deps:mac": "bash bin/download-deps.sh darwin",

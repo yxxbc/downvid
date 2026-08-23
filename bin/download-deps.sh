@@ -90,7 +90,11 @@ download_ffmpeg() {
     rm -rf "$tmpdir"
   elif [ "$os" = "linux" ]; then
     local tmpdir=$(mktemp -d)
-    curl -L -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
+    if [ "$arch" = "arm64" ]; then
+      curl -L -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
+    else
+      curl -L -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
+    fi
     tar -xf "$tmpdir/ffmpeg.tar.xz" -C "$tmpdir"
     cp "$tmpdir"/ffmpeg-*-static/ffmpeg "$dir/ffmpeg"
     chmod +x "$dir/ffmpeg"
