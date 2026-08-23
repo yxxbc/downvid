@@ -1,3 +1,5 @@
+packages:
+  - '.'
 allowBuilds:
   bufferutil: true
   electron: true
