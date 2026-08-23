@@ -138,6 +138,7 @@ cd downvid
 #### 2. 下载依赖工具
 
 本项目需要 **yt-dlp** 和 **ffmpeg** 才能正常运行。
+但是releases下载的已经封装依赖了，下载即用
 
 **macOS（Homebrew）：**
 ```bash
