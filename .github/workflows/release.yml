@@ -44,6 +44,8 @@ jobs:
           path: |
             release/**/*-arm64-Mac-*.dmg
             release/**/*-arm64-Mac-*.zip
+            release/**/latest-mac.yml
+            release/**/*.blockmap
           retention-days: 7
 
   build-mac-x64:
@@ -80,6 +82,8 @@ jobs:
           path: |
             release/**/*-x64-Mac-*.dmg
             release/**/*-x64-Mac-*.zip
+            release/**/latest-mac.yml
+            release/**/*.blockmap
           retention-days: 7
 
   build-win:
@@ -115,7 +119,9 @@ jobs:
         with:
           name: win-builds
           path: |
-            release/**/*.exe
+            release/**/DownVid-Setup-*.exe
+            release/**/latest.yml
+            release/**/*.blockmap
           retention-days: 7
 
   build-linux-x64:
@@ -150,10 +156,12 @@ jobs:
         with:
           name: linux-x64-builds
           path: |
-            release/**/*-x64-Linux-*.AppImage
-            release/**/*-x64-Linux-*.deb
-            release/**/*-x64-Linux-*.rpm
-            release/**/*-x64-Linux-*.tar.gz
+            release/**/*-Linux-*.AppImage
+            release/**/*-Linux-*.deb
+            release/**/*-Linux-*.rpm
+            release/**/*-Linux-*.tar.gz
+            release/**/latest-linux.yml
+            release/**/*.blockmap
           retention-days: 7
 
   build-linux-arm64:
@@ -188,10 +196,10 @@ jobs:
         with:
           name: linux-arm64-builds
           path: |
-            release/**/*-arm64-Linux-*.AppImage
-            release/**/*-arm64-Linux-*.deb
-            release/**/*-arm64-Linux-*.rpm
-            release/**/*-arm64-Linux-*.tar.gz
+            release/**/*-Linux-*.AppImage
+            release/**/*-Linux-*.tar.gz
+            release/**/latest-linux-arm64.yml
+            release/**/*.blockmap
           retention-days: 7
 
   release:
@@ -236,8 +244,10 @@ jobs:
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.zip
-            artifacts/**/*.exe
+            artifacts/**/DownVid-Setup-*.exe
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.rpm
             artifacts/**/*.tar.gz
+            artifacts/**/latest*.yml
+            artifacts/**/*.blockmap
