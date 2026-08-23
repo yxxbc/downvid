@@ -24,7 +24,14 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache binaries
+        uses: actions/cache@v4
+        id: cache-bin
+        with:
+          path: bin/
+          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
       - name: Download binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
         run: pnpm download-deps:mac
       - name: Prepare arm64 binaries
         run: |
@@ -59,7 +66,14 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache binaries
+        uses: actions/cache@v4
+        id: cache-bin
+        with:
+          path: bin/
+          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
       - name: Download binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
         run: pnpm download-deps:mac
       - name: Prepare x64 binaries
         run: |
@@ -94,7 +108,14 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache binaries
+        uses: actions/cache@v4
+        id: cache-bin
+        with:
+          path: bin/
+          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
       - name: Download binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
         run: pnpm download-deps:win
       - name: Prepare binaries
         shell: bash
@@ -129,7 +150,14 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache binaries
+        uses: actions/cache@v4
+        id: cache-bin
+        with:
+          path: bin/
+          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
       - name: Download binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
         run: pnpm download-deps:linux
       - name: Prepare x64 binaries
         run: |
@@ -166,7 +194,14 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache binaries
+        uses: actions/cache@v4
+        id: cache-bin
+        with:
+          path: bin/
+          key: binaries-${{ runner.os }}-${{ hashFiles('bin/download-deps.sh') }}
       - name: Download binaries
+        if: steps.cache-bin.outputs.cache-hit != 'true'
         run: pnpm download-deps:linux
       - name: Prepare arm64 binaries
         run: |
