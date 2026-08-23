@@ -14,7 +14,7 @@
     "build:mac:arm64": "vue-tsc && vite build && electron-builder --mac --arm64 --publish never --config electron-builder.json5",
     "build:mac:x64": "vue-tsc && vite build && electron-builder --mac --x64 --publish never --config electron-builder.json5",
     "build:linux:x64": "vue-tsc && vite build && electron-builder --linux --x64 --publish never --config electron-builder.json5",
-    "build:linux:arm64": "vue-tsc && vite build && electron-builder --linux --arm64 AppImage tar.gz --publish never --config electron-builder.json5",
+    "build:linux:arm64": "vue-tsc && vite build && electron-builder --linux AppImage tar.gz --arm64 --publish never --config electron-builder.json5",
     "preview": "vite preview",
     "download-deps": "bash bin/download-deps.sh",
     "download-deps:mac": "bash bin/download-deps.sh darwin",
