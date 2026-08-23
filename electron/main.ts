@@ -149,12 +149,4 @@ app.whenReady().then(() => {
   createWindow()
   createMenu()
   log('[LIFECYCLE] Window and menu created')
-
-  // 心跳日志，帮助定位闪退时间点
-  let heartbeatCount = 0
-  setInterval(() => {
-    heartbeatCount++
-    const windows = BrowserWindow.getAllWindows()
-    log(`[HEARTBEAT] #${heartbeatCount}, windows=${windows.length}, memory=${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`)
-  }, 5000)
 })
