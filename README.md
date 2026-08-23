@@ -14,6 +14,7 @@
         <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white" alt="Vue" /></a>
         <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
         <a href="https://github.com/yt-dlp/yt-dlp"><img src="https://img.shields.io/badge/yt--dlp-powered-FF0000?style=flat-square&logo=youtube&logoColor=white" alt="yt-dlp" /></a>
+        <a href="https://linux.do"><img src="https://img.shields.io/badge/LinuxDo-社区-4FC08D?style=flat-square&logo=linux&logoColor=white" alt="LinuxDo" /></a>
         <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-2c3e50?style=flat-square&logo=operating-system&logoColor=white" alt="Platform" />
       </p>
     </td>
@@ -312,6 +313,13 @@ A: 右键点击应用，选择"打开"，或在"系统设置 → 隐私与安全
 - [Electron](https://www.electronjs.org/) — 跨平台桌面应用框架
 - [Vue.js](https://vuejs.org/) — 渐进式 JavaScript 框架
 - [Tailwind CSS](https://tailwindcss.com/) — 实用优先的 CSS 框架
+- [Claude Code](https://www.anthropic.com/claude) — AI 编程助手
+
+---
+
+## 🔗 友链
+
+- [LinuxDo](https://linux.do) — 高质量的 Linux 中文社区
 
 ---
 
