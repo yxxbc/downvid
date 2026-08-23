@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  build-mac:
+  build-mac-arm64:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,17 +24,60 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build & Publish
-        run: pnpm build:mac
+      - name: Download binaries
+        run: pnpm download-deps:mac
+      - name: Prepare arm64 binaries
+        run: |
+          mkdir -p bin
+          cp bin/darwin/arm64/yt-dlp bin/yt-dlp
+          cp bin/darwin/arm64/ffmpeg bin/ffmpeg
+          chmod +x bin/yt-dlp bin/ffmpeg
+      - name: Build
+        run: pnpm build:mac:arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mac-builds
+          name: mac-arm64-builds
           path: |
-            release/**/*.dmg
-            release/**/*.zip
+            release/**/*-arm64-Mac-*.dmg
+            release/**/*-arm64-Mac-*.zip
+          retention-days: 7
+
+  build-mac-x64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download binaries
+        run: pnpm download-deps:mac
+      - name: Prepare x64 binaries
+        run: |
+          mkdir -p bin
+          cp bin/darwin/x64/yt-dlp bin/yt-dlp
+          cp bin/darwin/x64/ffmpeg bin/ffmpeg
+          chmod +x bin/yt-dlp bin/ffmpeg
+      - name: Build
+        run: pnpm build:mac:x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-x64-builds
+          path: |
+            release/**/*-x64-Mac-*.dmg
+            release/**/*-x64-Mac-*.zip
           retention-days: 7
 
   build-win:
@@ -51,7 +94,15 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build & Publish
+      - name: Download binaries
+        run: pnpm download-deps:win
+      - name: Prepare binaries
+        shell: bash
+        run: |
+          mkdir -p bin
+          cp bin/win32/x64/yt-dlp.exe bin/yt-dlp.exe
+          cp bin/win32/x64/ffmpeg.exe bin/ffmpeg.exe
+      - name: Build
         run: pnpm build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,7 +128,15 @@ jobs:
           version: 9
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build & Publish
+      - name: Download binaries
+        run: pnpm download-deps:linux
+      - name: Prepare x64 binaries
+        run: |
+          mkdir -p bin
+          cp bin/linux/x64/yt-dlp bin/yt-dlp
+          cp bin/linux/x64/ffmpeg bin/ffmpeg
+          chmod +x bin/yt-dlp bin/ffmpeg
+      - name: Build
         run: pnpm build:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,7 +152,7 @@ jobs:
           retention-days: 7
 
   release:
-    needs: [build-mac, build-win, build-linux]
+    needs: [build-mac-arm64, build-mac-x64, build-win, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:

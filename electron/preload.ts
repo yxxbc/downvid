@@ -40,6 +40,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getContributors: () => ipcRenderer.invoke('app:getContributors'),
     getDefaultDownloadDir: () => ipcRenderer.invoke('app:getDefaultDownloadDir'),
     fetchImage: (url: string, referer?: string) => ipcRenderer.invoke('app:fetchImage', url, referer),
+    getLog: () => ipcRenderer.invoke('app:getLog'),
+    clearLog: () => ipcRenderer.invoke('app:clearLog'),
+    openLogDir: () => ipcRenderer.invoke('app:openLogDir'),
   },
   
   // 系统操作

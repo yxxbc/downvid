@@ -53,8 +53,14 @@ export function getFfmpegPath(): string {
   return ffmpegName
 }
 
-// 检查 JS 运行时是否可用
+// 检查 JS 运行时是否可用（优先使用 Electron 自带的 Node.js）
 export function checkJsRuntime(): { available: boolean; path: string | null; name: string } {
+  // Electron 自带 Node.js 运行时，直接使用 process.execPath
+  // yt-dlp 的 --js-runtimes 接受 node:path 格式，Electron 可执行文件可以作为 Node.js 运行时
+  if (process.versions.electron) {
+    return { available: true, path: process.execPath, name: 'Node.js (Electron)' }
+  }
+
   const platform = process.platform
   const isWin = platform === 'win32'
 

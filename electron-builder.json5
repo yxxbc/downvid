@@ -4,12 +4,20 @@
   "appId": "com.downvid.app",
   "asar": true,
   "productName": "DownVid",
+  "icon": "build/icon.png",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist",
     "dist-electron"
+  ],
+  "extraResources": [
+    {
+      "from": "bin",
+      "to": "bin",
+      "filter": ["**/*"]
+    }
   ],
   "npmRebuild": false,
   "nodeGypRebuild": false,

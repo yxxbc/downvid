@@ -98,7 +98,8 @@ body:
     attributes:
       label: 错误日志
       description: |
-        日志文件位置:
+        在应用内「设置」页面底部的「应用日志」区域可以直接查看、复制日志。
+        也可以手动打开日志文件:
         - macOS: `~/Library/Application Support/downvid/downvid.log`
         - Windows: `%APPDATA%\downvid\downvid.log`
         - Linux: `~/.config/downvid/downvid.log`

@@ -156,7 +156,8 @@ export const useDownloadStore = defineStore('download', () => {
       const useDirectDownload = isDouyin || isKuaishou
 
       const settings = JSON.parse(localStorage.getItem('settings') || '{}')
-      const cookiesFile = settings.cookiesFile || ''
+      const cookieMode = settings.cookieMode || 'auto'
+      const cookiesFile = cookieMode === 'manual' ? (settings.cookiesFile || '') : ''
       const filenameTemplate = settings.filenameTemplate || '%(title)s'
 
       const downloadOptions: any = {

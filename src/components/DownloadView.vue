@@ -119,7 +119,8 @@ async function parseVideo() {
 
   try {
     const settings = JSON.parse(localStorage.getItem('settings') || '{}')
-    const cookiesFile = settings.cookiesFile || ''
+    const cookieMode = settings.cookieMode || 'auto'
+    const cookiesFile = cookieMode === 'manual' ? (settings.cookiesFile || '') : ''
     const info = await window.electronAPI.ytdlp.parse(store.url, cookiesFile)
     store.videoInfo = info
 

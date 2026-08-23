@@ -28,6 +28,15 @@ interface Window {
       }>
       getDefaultDownloadDir: () => Promise<string>
       fetchImage: (url: string, referer?: string) => Promise<string>
+      getLog: () => Promise<{
+        success: boolean
+        content?: string
+        path?: string
+        totalLines?: number
+        error?: string
+      }>
+      clearLog: () => Promise<{ success: boolean; error?: string }>
+      openLogDir: () => Promise<{ success: boolean; error?: string }>
     }
     shell: {
       openPath: (filePath: string) => Promise<void>

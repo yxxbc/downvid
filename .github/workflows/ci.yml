@@ -31,7 +31,5 @@ jobs:
       - name: Type check
         run: pnpm vue-tsc --noEmit
 
-      - name: Build
-        run: |
-          pnpm vite build
-          pnpm vite build --mode electron
+      - name: Build renderer and main process
+        run: pnpm vite build
