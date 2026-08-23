@@ -38,19 +38,19 @@ download_ytdlp() {
   log "下载 yt-dlp (${os}/${arch})..."
   
   if [ "$os" = "win32" ]; then
-    curl -L -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+    curl -L --fail --retry 3 --retry-delay 2 -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
   elif [ "$os" = "darwin" ]; then
     if [ "$arch" = "arm64" ]; then
-      curl -L -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos_arm64"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos_arm64"
     else
-      curl -L -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
     fi
     chmod +x "$dir/$file"
   elif [ "$os" = "linux" ]; then
     if [ "$arch" = "arm64" ]; then
-      curl -L -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64"
     else
-      curl -L -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$dir/$file" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
     fi
     chmod +x "$dir/$file"
   fi
@@ -74,16 +74,16 @@ download_ffmpeg() {
   
   if [ "$os" = "win32" ]; then
     local tmpdir=$(mktemp -d)
-    curl -L -o "$tmpdir/ffmpeg.zip" "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+    curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
     unzip -q -o "$tmpdir/ffmpeg.zip" -d "$tmpdir"
     cp "$tmpdir"/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe "$dir/ffmpeg.exe"
     rm -rf "$tmpdir"
   elif [ "$os" = "darwin" ]; then
     local tmpdir=$(mktemp -d)
     if [ "$arch" = "arm64" ]; then
-      curl -L -o "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
     else
-      curl -L -o "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
     fi
     unzip -q -o "$tmpdir/ffmpeg.zip" -d "$dir"
     chmod +x "$dir/ffmpeg"
@@ -91,9 +91,9 @@ download_ffmpeg() {
   elif [ "$os" = "linux" ]; then
     local tmpdir=$(mktemp -d)
     if [ "$arch" = "arm64" ]; then
-      curl -L -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
     else
-      curl -L -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
+      curl -L --fail --retry 3 --retry-delay 2 -o "$tmpdir/ffmpeg.tar.xz" "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
     fi
     tar -xf "$tmpdir/ffmpeg.tar.xz" -C "$tmpdir"
     cp "$tmpdir"/ffmpeg-*-static/ffmpeg "$dir/ffmpeg"

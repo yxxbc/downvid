@@ -1,0 +1,110 @@
+name: Bug Report
+description: Report a bug
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the following information to help us diagnose the issue.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 10
+        - Windows 11
+        - Linux (Ubuntu/Debian)
+        - Linux (Arch)
+        - Linux (Other)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: DownVid Version
+      placeholder: e.g., 1.0.0 (check in About page)
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Issue Category
+      options:
+        - Video parsing failure
+        - Download failure/interruption
+        - Downloaded video cannot be played
+        - UI display issue
+        - App crash/freeze
+        - Cookie related issue
+        - Auto-update issue
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      placeholder: Briefly describe the issue you encountered
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open the app
+        2. Paste link: https://...
+        3. Click "Parse"
+        4. Select quality
+        5. Click download
+        6. Error message appears: ...
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Video URL (if applicable)
+      placeholder: Paste the video link you tried to download
+    validations:
+      required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      placeholder: What did you expect to happen?
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Screen Recording
+      placeholder: If possible, attach screenshots or screen recording
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: |
+        You can view and copy logs directly from the "App Logs" section at the bottom of the Settings page.
+        Or manually open the log file:
+        - macOS: `~/Library/Application Support/downvid/downvid.log`
+        - Windows: `%APPDATA%\downvid\downvid.log`
+        - Linux: `~/.config/downvid/downvid.log`
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before Submitting
+      options:
+        - label: I have searched existing issues and found no duplicates
+          required: true
+        - label: I am using the latest version
+          required: false
+        - label: I have read the README and FAQ
+          required: false
