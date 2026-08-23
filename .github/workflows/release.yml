@@ -23,7 +23,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare arm64 binaries
@@ -32,6 +32,7 @@ jobs:
           cp bin/darwin/arm64/yt-dlp bin/yt-dlp
           cp bin/darwin/arm64/ffmpeg bin/ffmpeg
           chmod +x bin/yt-dlp bin/ffmpeg
+          rm -rf bin/win32 bin/darwin bin/linux
       - name: Build
         run: pnpm build:mac:arm64
         env:
@@ -58,7 +59,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare x64 binaries
@@ -67,6 +68,7 @@ jobs:
           cp bin/darwin/x64/yt-dlp bin/yt-dlp
           cp bin/darwin/x64/ffmpeg bin/ffmpeg
           chmod +x bin/yt-dlp bin/ffmpeg
+          rm -rf bin/win32 bin/darwin bin/linux
       - name: Build
         run: pnpm build:mac:x64
         env:
@@ -93,7 +95,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare binaries
@@ -102,6 +104,7 @@ jobs:
           mkdir -p bin
           cp bin/win32/x64/yt-dlp.exe bin/yt-dlp.exe
           cp bin/win32/x64/ffmpeg.exe bin/ffmpeg.exe
+          rm -rf bin/win32 bin/darwin bin/linux
       - name: Build
         run: pnpm build:win
         env:
@@ -128,7 +131,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare x64 binaries
@@ -137,6 +140,7 @@ jobs:
           cp bin/linux/x64/yt-dlp bin/yt-dlp
           cp bin/linux/x64/ffmpeg bin/ffmpeg
           chmod +x bin/yt-dlp bin/ffmpeg
+          rm -rf bin/win32 bin/darwin bin/linux
       - name: Build
         run: pnpm build:linux:x64
         env:
@@ -165,7 +169,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Prepare arm64 binaries
@@ -174,6 +178,7 @@ jobs:
           cp bin/linux/arm64/yt-dlp bin/yt-dlp
           cp bin/linux/arm64/ffmpeg bin/ffmpeg
           chmod +x bin/yt-dlp bin/ffmpeg
+          rm -rf bin/win32 bin/darwin bin/linux
       - name: Build
         run: pnpm build:linux:arm64
         env:

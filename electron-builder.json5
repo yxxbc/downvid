@@ -21,7 +21,6 @@
   ],
   "npmRebuild": false,
   "nodeGypRebuild": false,
-  "compression": "maximum",
   "removePackageScripts": true,
   "removePackageKeywords": true,
 
