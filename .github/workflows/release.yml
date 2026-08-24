@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [AppImage, deb, rpm, tar.gz]
+        target: [appimage, deb, rpm, tar.gz]
     steps:
       - uses: actions/checkout@v7
         with:
