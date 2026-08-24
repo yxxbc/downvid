@@ -1,5 +1,4 @@
-import { getChromiumPath } from '../utils/browser'
-import { promptChromeDownload } from './ytdlp'
+import { getSharedBrowser, scheduleBrowserClose } from '../utils/browser'
 
 // 估算文件大小
 function estimateFileSize(height: number, durationMs: number): number {
@@ -159,29 +158,11 @@ export async function parseKuaishouWithAPI(url: string): Promise<any> {
 
 // 使用无头浏览器解析快手视频
 export async function parseKuaishouWithPuppeteer(url: string): Promise<any> {
-  const puppeteer = await import('puppeteer-core')
-  const chromePath = getChromiumPath()
+  const browser = await getSharedBrowser()
 
-  if (!chromePath) {
-    await promptChromeDownload()
-    throw new Error('未检测到 Chrome 浏览器')
-  }
-
-  const browser = await puppeteer.default.launch({
-    headless: true,
-    executablePath: chromePath,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--window-size=1920,1080',
-    ],
-  })
-
+  let page: any = null
   try {
-    const page = await browser.newPage()
+    page = await browser.newPage()
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     await page.setViewport({ width: 1920, height: 1080 })
 
@@ -233,7 +214,7 @@ export async function parseKuaishouWithPuppeteer(url: string): Promise<any> {
             }
           }`,
         }
-        const response = await page.evaluate(async (query) => {
+        const response = await page.evaluate(async (query: any) => {
           const res = await fetch('https://www.kuaishou.com/graphql', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -452,6 +433,7 @@ export async function parseKuaishouWithPuppeteer(url: string): Promise<any> {
 
     return videoInfo
   } finally {
-    await browser.close()
+    if (page) await page.close().catch(() => {})
+    scheduleBrowserClose()
   }
 }

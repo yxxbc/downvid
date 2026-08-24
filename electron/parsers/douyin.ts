@@ -1,5 +1,4 @@
-import { getChromiumPath } from '../utils/browser'
-import { promptChromeDownload } from './ytdlp'
+import { getSharedBrowser, scheduleBrowserClose } from '../utils/browser'
 import fs from 'node:fs'
 
 // 解析 Netscape 格式的 cookies.txt
@@ -202,13 +201,7 @@ export async function parseDouyinWithAPI(url: string, cookiesFile?: string): Pro
 
 // 使用无头浏览器解析抖音视频
 export async function parseDouyinWithPuppeteer(url: string, cookiesFile?: string): Promise<any> {
-  const puppeteer = await import('puppeteer-core')
-  const chromePath = getChromiumPath()
-
-  if (!chromePath) {
-    await promptChromeDownload()
-    throw new Error('未检测到 Chrome 浏览器')
-  }
+  const browser = await getSharedBrowser()
 
   // 解析 cookies 并转换为 Puppeteer 格式
   const cookies = cookiesFile && fs.existsSync(cookiesFile) ? parseCookiesFile(cookiesFile) : []
@@ -223,21 +216,9 @@ export async function parseDouyinWithPuppeteer(url: string, cookiesFile?: string
       expires: c.expiry > 0 ? c.expiry : -1,
     }))
 
-  const browser = await puppeteer.default.launch({
-    headless: true,
-    executablePath: chromePath,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--window-size=1920,1080',
-    ],
-  })
-
+  let page: any = null
   try {
-    const page = await browser.newPage()
+    page = await browser.newPage()
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     await page.setViewport({ width: 1920, height: 1080 })
 
@@ -331,6 +312,7 @@ export async function parseDouyinWithPuppeteer(url: string, cookiesFile?: string
 
     return videoInfo
   } finally {
-    await browser.close()
+    if (page) await page.close().catch(() => {})
+    scheduleBrowserClose()
   }
 }
