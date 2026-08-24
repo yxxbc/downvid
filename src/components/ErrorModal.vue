@@ -70,15 +70,14 @@
             </button>
             <div v-else />
             <div class="flex items-center gap-2">
-              <a
+              <button
                 v-if="type === 'error'"
-                :href="issueUrl"
-                target="_blank"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-primary hover:bg-primary-container/20 transition-colors"
+                @click="openIssue"
               >
                 <span class="material-symbols-outlined text-sm">bug_report</span>
                 提交 Issue
-              </a>
+              </button>
               <button
                 class="px-4 py-1.5 rounded-md text-xs font-bold transition-colors"
                 :class="type === 'error' ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-highest text-on-surface hover:bg-surface-variant'"
@@ -128,6 +127,10 @@ const issueUrl = computed(() => {
 
 function close() {
   emit('update:visible', false)
+}
+
+function openIssue() {
+  window.electronAPI?.shell?.openExternal(issueUrl.value)
 }
 
 async function copyDetail() {

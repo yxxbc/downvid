@@ -114,6 +114,13 @@
                   class="w-full h-full object-cover"
                   loading="lazy"
                 />
+                <!-- Developer / Bot tag -->
+                <div v-if="c.isDeveloper" class="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-primary text-on-primary text-[7px] font-bold rounded-sm leading-none z-10">
+                  DEV
+                </div>
+                <div v-else-if="c.isBot" class="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-surface-container-highest text-on-surface-variant text-[7px] font-bold rounded-sm leading-none z-10">
+                  BOT
+                </div>
                 <!-- Hover tooltip -->
                 <div class="absolute -bottom-9 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-on-surface text-surface text-[11px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                   {{ c.login }}
@@ -167,6 +174,8 @@ interface Contributor {
   avatarUrl: string
   htmlUrl: string
   contributions: number
+  isBot: boolean
+  isDeveloper: boolean
 }
 
 const appVersion = ref('1.0.0')

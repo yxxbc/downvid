@@ -11,8 +11,10 @@
       <DownloadView v-show="currentTab === 'download'" />
       <HistoryView v-show="currentTab === 'history'" />
       <AboutView v-show="currentTab === 'about'" />
-      <SettingsView v-show="currentTab === 'settings'" />
     </main>
+
+    <!-- Settings Panel (floating) -->
+    <SettingsView :visible="showSettings" @update:visible="showSettings = $event" />
 
     <!-- Global Error Modal -->
     <ErrorModal
@@ -23,6 +25,9 @@
       :detail="modalState.detail"
       @update:visible="modal.close()"
     />
+
+    <!-- Auto Update Modal -->
+    <UpdateModal :visible="showUpdate" @close="showUpdate = false" />
   </div>
 </template>
 
@@ -34,6 +39,7 @@ import HistoryView from './components/HistoryView.vue'
 import AboutView from './components/AboutView.vue'
 import SettingsView from './components/SettingsView.vue'
 import ErrorModal from './components/ErrorModal.vue'
+import UpdateModal from './components/UpdateModal.vue'
 import { useErrorModal } from './composables/useErrorModal'
 import type { TabType } from './types'
 
@@ -41,20 +47,26 @@ const modal = useErrorModal()
 const modalState = modal.state
 
 const currentTab = ref<TabType>('download')
+const showUpdate = ref(false)
+const showSettings = ref(false)
 
 function changeTab(tab: TabType) {
+  if (tab === 'settings') {
+    showSettings.value = true
+    return
+  }
   currentTab.value = tab
-  // 通知子组件标签已切换
   window.dispatchEvent(new CustomEvent('tab-changed', { detail: tab }))
 }
 
 // 监听跳转设置页事件
 window.addEventListener('navigate-to-settings', () => {
-  currentTab.value = 'settings'
+  showSettings.value = true
 })
 
 // 监听菜单点击关于事件
 let unsubscribeMenu: (() => void) | null = null
+let unsubscribeUpdate: (() => void) | null = null
 
 onMounted(() => {
   // 通知 preload 移除启动加载动画
@@ -65,12 +77,24 @@ onMounted(() => {
       currentTab.value = 'about'
     })
   }
+
+  // 启动时自动检查更新
+  if (window.electronAPI?.onUpdateStatus) {
+    unsubscribeUpdate = window.electronAPI.onUpdateStatus((data: any) => {
+      if (data.status === 'available') {
+        showUpdate.value = true
+      }
+    })
+  }
+  // 延迟 3 秒后检查更新，避免影响启动速度
+  setTimeout(() => {
+    window.electronAPI?.checkForUpdates?.()
+  }, 3000)
 })
 
 onUnmounted(() => {
-  if (unsubscribeMenu) {
-    unsubscribeMenu()
-  }
+  if (unsubscribeMenu) unsubscribeMenu()
+  if (unsubscribeUpdate) unsubscribeUpdate()
 })
 </script>
 
