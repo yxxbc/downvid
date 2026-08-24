@@ -21,6 +21,8 @@ interface Window {
           avatarUrl: string
           htmlUrl: string
           contributions: number
+          isBot: boolean
+          isDeveloper: boolean
         }>
         error?: string
         fromCache?: boolean
@@ -37,13 +39,16 @@ interface Window {
       }>
       clearLog: () => Promise<{ success: boolean; error?: string }>
       openLogDir: () => Promise<{ success: boolean; error?: string }>
+      setProxy: (proxy: string) => Promise<boolean>
+      testProxy: (proxy: string) => Promise<{ success: boolean; latency?: number; error?: string }>
+      getDiskSpace: (dir?: string) => Promise<{ free: number; total: number; unit: string }>
     }
     shell: {
       openPath: (filePath: string) => Promise<void>
       openExternal: (url: string) => Promise<void>
     }
     ytdlp: {
-      parse: (url: string, cookiesFile?: string) => Promise<any>
+      parse: (url: string, cookiesFile?: string, proxy?: string) => Promise<any>
       download: (options: {
         url: string
         formatId: string
@@ -55,6 +60,8 @@ interface Window {
         downloadMode?: 'video' | 'audio'
         audioTrack?: any
         subtitles?: string[]
+        proxy?: string
+        cacheFile?: string
       }) => Promise<any>
       pauseDownload: (taskId: string) => Promise<boolean>
     }
@@ -87,5 +94,12 @@ interface Window {
     }) => void) => () => void
     // 菜单事件监听
     onMenuShowAbout: (callback: () => void) => () => void
+    // 窗口控制
+    window: {
+      minimize: () => Promise<void>
+      maximize: () => Promise<void>
+      close: () => Promise<void>
+      isMaximized: () => Promise<boolean>
+    }
   }
 }

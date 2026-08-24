@@ -1,7 +1,8 @@
-import { ipcMain, dialog, shell, clipboard, app } from 'electron'
+import { ipcMain, dialog, shell, clipboard, app, session, BrowserWindow } from 'electron'
 import { getDefaultDownloadDir } from '../utils/platform'
 import fs from 'node:fs'
 import path from 'node:path'
+import { exec } from 'node:child_process'
 
 function getLogPath(): string {
   return path.join(app.getPath('userData'), 'downvid.log')
@@ -86,6 +87,91 @@ export function registerSystemIpc() {
       return `data:${contentType};base64,${base64}`
     } catch {
       return null
+    }
+  })
+
+  // 代理设置
+  ipcMain.handle('app:setProxy', async (_, proxy: string) => {
+    const ses = session.defaultSession
+    if (proxy) {
+      await ses.setProxy({ proxyRules: proxy })
+    } else {
+      await ses.setProxy({ proxyRules: '' })
+    }
+    return true
+  })
+
+  // 测试代理连接
+  ipcMain.handle('app:testProxy', async (_, proxy: string) => {
+    const start = Date.now()
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000)
+      const response = await fetch('https://www.google.com', {
+        signal: controller.signal,
+        ...(proxy ? { dispatcher: undefined } : {}),
+      } as any)
+      clearTimeout(timeout)
+      const elapsed = Date.now() - start
+      if (response.ok) {
+        return { success: true, latency: elapsed }
+      }
+      return { success: false, error: `HTTP ${response.status}` }
+    } catch (e: any) {
+      return { success: false, error: e.message || '连接失败' }
+    }
+  })
+
+  // 窗口控制
+  ipcMain.handle('window:minimize', () => {
+    BrowserWindow.getFocusedWindow()?.minimize()
+  })
+  ipcMain.handle('window:maximize', () => {
+    const win = BrowserWindow.getFocusedWindow()
+    if (win) {
+      win.isMaximized() ? win.unmaximize() : win.maximize()
+    }
+  })
+  ipcMain.handle('window:close', () => {
+    BrowserWindow.getFocusedWindow()?.close()
+  })
+  ipcMain.handle('window:isMaximized', () => {
+    return BrowserWindow.getFocusedWindow()?.isMaximized() || false
+  })
+
+  // 获取磁盘可用空间
+  ipcMain.handle('app:getDiskSpace', async (_, dir?: string) => {
+    const targetDir = dir || getDefaultDownloadDir()
+    try {
+      if (process.platform === 'win32') {
+        const drive = path.parse(targetDir).root.replace('\\', '')
+        const output = await new Promise<string>((resolve, reject) => {
+          exec(`wmic logicaldisk where "DeviceID='${drive}'" get FreeSpace,Size /value`, (err, stdout) => {
+            if (err) reject(err)
+            else resolve(stdout)
+          })
+        })
+        const free = parseInt(output.match(/FreeSpace=(\d+)/)?.[1] || '0')
+        const total = parseInt(output.match(/Size=(\d+)/)?.[1] || '0')
+        return { free, total, unit: 'bytes' }
+      } else {
+        const output = await new Promise<string>((resolve, reject) => {
+          exec(`df -k "${targetDir}"`, (err, stdout) => {
+            if (err) reject(err)
+            else resolve(stdout)
+          })
+        })
+        const lines = output.trim().split('\n')
+        if (lines.length >= 2) {
+          const parts = lines[1].split(/\s+/)
+          const total = parseInt(parts[1]) * 1024
+          const free = parseInt(parts[3]) * 1024
+          return { free, total, unit: 'bytes' }
+        }
+        return { free: 0, total: 0, unit: 'bytes' }
+      }
+    } catch {
+      return { free: 0, total: 0, unit: 'bytes' }
     }
   })
 }

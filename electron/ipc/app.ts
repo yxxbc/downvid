@@ -56,12 +56,13 @@ async function fetchContributorsFromAPI(): Promise<any[]> {
 
   const data = await response.json()
   return data
-    .filter((c: any) => c.type === 'User')
     .map((c: any) => ({
       login: c.login,
       avatarUrl: c.avatar_url,
       htmlUrl: c.html_url,
       contributions: c.contributions,
+      isBot: c.type === 'Bot',
+      isDeveloper: c.login === 'yxxbc',
     }))
 }
 
