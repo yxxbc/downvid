@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, session } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -8,6 +8,7 @@ import { registerAppIpc } from './ipc/app'
 import { registerDownloadIpc } from './ipc/download'
 import { registerHistoryIpc } from './ipc/history'
 import { registerSystemIpc } from './ipc/system'
+import { setupAutoUpdater } from './updater'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -57,6 +58,23 @@ log(`[BOOT] Main process starting, pid=${process.pid}, platform=${process.platfo
 log(`[BOOT] APP_ROOT=${process.env.APP_ROOT}`)
 log(`[BOOT] VITE_DEV_SERVER_URL=${VITE_DEV_SERVER_URL || 'none (production)'}`)
 
+// 应用代理设置到 Electron session
+function applyProxy() {
+  // 代理通过 IPC 从渲染进程设置（app:setProxy）
+}
+
+// 通过 IPC 设置代理
+export function setProxyForSession(proxy: string) {
+  const ses = session.defaultSession
+  if (proxy) {
+    log(`[PROXY] Setting proxy: ${proxy}`)
+    ses.setProxy({ proxyRules: proxy })
+  } else {
+    log(`[PROXY] Clearing proxy`)
+    ses.setProxy({ proxyRules: '' })
+  }
+}
+
 function createWindow() {
   const preloadPath = path.join(__dirname, 'preload.mjs')
   log(`[WINDOW] Creating window, preload=${preloadPath}`)
@@ -66,7 +84,8 @@ function createWindow() {
     height: 900,
     minWidth: 1000,
     minHeight: 700,
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    titleBarStyle: 'hidden',
+    ...(process.platform === 'darwin' ? { trafficLightPosition: { x: 16, y: 16 } } : {}),
     icon: process.platform !== 'darwin'
       ? path.join(process.env.APP_ROOT || '', 'ldstore.ico')
       : undefined,
@@ -74,10 +93,17 @@ function createWindow() {
       preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
+      spellcheck: false,
     },
   })
 
   setMainWindow(win)
+
+  // 应用代理设置
+  applyProxy()
+
+  // 设置自动更新
+  setupAutoUpdater()
 
   win.on('closed', () => {
     log('[WINDOW] Window closed')
@@ -85,6 +111,15 @@ function createWindow() {
 
   win.webContents.on('render-process-gone', (_e, details) => {
     log(`[WINDOW] render-process-gone: reason=${details.reason}, exitCode=${details.exitCode}`)
+    // 自动重载崩溃的 renderer
+    if (details.reason === 'crashed' || details.reason === 'killed') {
+      setTimeout(() => {
+        if (!win.isDestroyed()) {
+          log('[WINDOW] Reloading after renderer crash')
+          win.reload()
+        }
+      }, 1000)
+    }
   })
 
   win.webContents.on('did-fail-load', (_e, errorCode, errorDescription, validatedURL) => {

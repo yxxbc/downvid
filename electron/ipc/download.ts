@@ -16,12 +16,12 @@ function sendDownloadProgress(data: any) {
   })
 }
 
-// 进度更新节流：每个 taskId 最多每 500ms 发送一次 IPC
+// 进度更新节流：每个 taskId 最多每 200ms 发送一次 IPC
 const progressThrottles = new Map<string, number>()
 function throttledProgress(data: any) {
   const now = Date.now()
   const last = progressThrottles.get(data.taskId) || 0
-  if (now - last < 500) return
+  if (now - last < 200) return
   progressThrottles.set(data.taskId, now)
   sendDownloadProgress(data)
 }
@@ -87,25 +87,30 @@ export function registerDownloadIpc() {
   ipcMain.handle('ytdlp:parse', async (_event, ...args) => {
     const url = args[0] as string
     const cookiesFile = args[1] as string | undefined
+    const proxy = args[2] as string | undefined
 
-    if (isDouyinUrl(url)) {
-      try { return await parseDouyinWithAPI(url, cookiesFile) } catch {
-        try { return await parseDouyinWithPuppeteer(url, cookiesFile) } catch {}
+    try {
+      if (isDouyinUrl(url)) {
+        try { return await parseDouyinWithAPI(url, cookiesFile) } catch {
+          try { return await parseDouyinWithPuppeteer(url, cookiesFile) } catch {}
+        }
       }
-    }
-    if (isKuaishouUrl(url)) {
-      try { return await parseKuaishouWithAPI(url) } catch {
-        try { return await parseKuaishouWithPuppeteer(url) } catch {}
+      if (isKuaishouUrl(url)) {
+        try { return await parseKuaishouWithAPI(url) } catch {
+          try { return await parseKuaishouWithPuppeteer(url) } catch {}
+        }
       }
-    }
 
-    return parseWithYtdlp(url, cookiesFile)
+      return await parseWithYtdlp(url, cookiesFile, proxy)
+    } catch (e: any) {
+      throw new Error(e?.message || '解析失败，请检查链接是否有效')
+    }
   })
 
   ipcMain.handle('ytdlp:download', async (_event, options: {
     url: string; formatId: string; outputDir: string; filename?: string; taskId: string
     directUrl?: string; cookiesFile?: string; downloadMode?: 'video' | 'audio' | 'subtitle'
-    audioTrack?: any; subtitles?: string[]; filenameTemplate?: string
+    audioTrack?: any; subtitles?: string[]; filenameTemplate?: string; proxy?: string
   }) => {
     return new Promise(async (resolve, reject) => {
       const outputDir = ensureDownloadDir(options.outputDir)
@@ -159,6 +164,9 @@ export function registerDownloadIpc() {
       if (isAudioOnly) args.push('--postprocessor-args', 'FFmpegMetadata:-write_id3v1 1')
       if (!isSubtitleOnly && options.subtitles?.length) {
         args.push('--write-subs', '--sub-langs', options.subtitles.join(','), '--convert-subs', 'srt')
+      }
+      if (options.proxy) {
+        args.push('--proxy', options.proxy)
       }
 
       if (isYoutube) {
@@ -217,22 +225,23 @@ export function registerDownloadIpc() {
         }
 
         const destMatch = line.match(/\[download\] Destination: (.+)/)
-        if (destMatch) downloadedFile = path.resolve(destMatch[1].trim().replace(/\//g, '\\'))
+        if (destMatch) downloadedFile = path.resolve(destMatch[1].trim())
 
         const existsMatch = line.match(/\[download\] (.+) has already been downloaded/)
-        if (existsMatch) downloadedFile = path.resolve(existsMatch[1].trim().replace(/\//g, '\\'))
+        if (existsMatch) downloadedFile = path.resolve(existsMatch[1].trim())
 
         if (line.includes('[Merger]') || line.includes('Merging formats')) {
           throttledProgress({ taskId: options.taskId, url: options.url, percent: 99, status: 'merging', message: '正在合并音视频...' })
         }
 
         const mergeMatch = line.match(/\[Merger\] Merging formats into "(.+)"/)
-        if (mergeMatch) downloadedFile = path.resolve(mergeMatch[1].trim().replace(/\//g, '\\'))
+        if (mergeMatch) downloadedFile = path.resolve(mergeMatch[1].trim())
       })
 
       child.stderr.on('data', (data) => {
         const line = data.toString()
         errorOutput += line
+        if (errorOutput.length > 20000) errorOutput = errorOutput.slice(-20000)
         const percentMatch = line.match(/(\d+\.?\d*)%/)
         if (percentMatch) {
           const percent = parseFloat(percentMatch[1])
@@ -254,9 +263,9 @@ export function registerDownloadIpc() {
           const lastError = errorLines.length > 0 ? errorLines[errorLines.length - 1].trim() : ''
           if (lastError.includes('429') || lastError.includes('Too Many Requests')) {
             reject(new Error('YouTube 请求过于频繁，请等待几分钟后重试 (HTTP 429)'))
-          } else {
-            reject(new Error(lastError || '下载失败'))
+            return
           }
+          reject(new Error(lastError || '下载失败'))
           return
         }
 
