@@ -126,6 +126,9 @@ jobs:
 
   build-linux-x64:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [AppImage, deb, rpm, tar.gz]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -148,20 +151,14 @@ jobs:
           chmod +x bin/yt-dlp bin/ffmpeg
           rm -rf bin/win32 bin/darwin bin/linux
       - name: Build
-        run: pnpm build:linux:x64
+        run: pnpm build:linux:x64:${{ matrix.target }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-x64-builds
-          path: |
-            release/**/*-Linux-*.AppImage
-            release/**/*-Linux-*.deb
-            release/**/*-Linux-*.rpm
-            release/**/*-Linux-*.tar.gz
-            release/**/latest-linux.yml
-            release/**/*.blockmap
+          name: linux-x64-${{ matrix.target }}
+          path: release/**/*
           retention-days: 7
 
   build-linux-arm64:
