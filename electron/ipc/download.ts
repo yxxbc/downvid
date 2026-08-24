@@ -16,6 +16,16 @@ function sendDownloadProgress(data: any) {
   })
 }
 
+// 进度更新节流：每个 taskId 最多每 500ms 发送一次 IPC
+const progressThrottles = new Map<string, number>()
+function throttledProgress(data: any) {
+  const now = Date.now()
+  const last = progressThrottles.get(data.taskId) || 0
+  if (now - last < 500) return
+  progressThrottles.set(data.taskId, now)
+  sendDownloadProgress(data)
+}
+
 async function downloadDirectFile(url: string, outputPath: string, taskId: string): Promise<void> {
   return new Promise(async (resolve, reject) => {
     try {
@@ -36,6 +46,7 @@ async function downloadDirectFile(url: string, outputPath: string, taskId: strin
 
       sendDownloadProgress({ taskId, url, percent: 0, status: 'downloading', speed: '0 MB/s', eta: '计算中...' })
       const startTime = Date.now()
+      let lastThrottledUpdate = 0
 
       while (true) {
         const { done, value } = await reader.read()
@@ -50,12 +61,15 @@ async function downloadDirectFile(url: string, outputPath: string, taskId: strin
           const elapsed = (now - startTime) / 1000
           const speed = elapsed > 0 ? (downloaded / 1024 / 1024 / elapsed).toFixed(2) : '0'
           const remaining = downloaded > 0 ? (totalSize - downloaded) / (downloaded / elapsed) : 0
-          sendDownloadProgress({
-            taskId, url, percent, status: 'downloading',
-            totalSize: `${(totalSize / 1024 / 1024).toFixed(1)} MB`,
-            speed: `${speed} MB/s`,
-            eta: `${Math.ceil(remaining)}s`,
-          })
+          if (now - lastThrottledUpdate >= 500) {
+            lastThrottledUpdate = now
+            sendDownloadProgress({
+              taskId, url, percent, status: 'downloading',
+              totalSize: `${(totalSize / 1024 / 1024).toFixed(1)} MB`,
+              speed: `${speed} MB/s`,
+              eta: `${Math.ceil(remaining)}s`,
+            })
+          }
         }
       }
 
@@ -193,7 +207,7 @@ export function registerDownloadIpc() {
             if (Math.abs(percent - lastProgress) > 0.1 || !hasStarted) {
               lastProgress = percent
               hasStarted = true
-              sendDownloadProgress({
+              throttledProgress({
                 taskId: options.taskId, url: options.url, percent,
                 totalSize: match[2] || '', speed: match[3] || '', eta: match[4] || '', status: 'downloading',
               })
@@ -209,7 +223,7 @@ export function registerDownloadIpc() {
         if (existsMatch) downloadedFile = path.resolve(existsMatch[1].trim().replace(/\//g, '\\'))
 
         if (line.includes('[Merger]') || line.includes('Merging formats')) {
-          sendDownloadProgress({ taskId: options.taskId, url: options.url, percent: 99, status: 'merging', message: '正在合并音视频...' })
+          throttledProgress({ taskId: options.taskId, url: options.url, percent: 99, status: 'merging', message: '正在合并音视频...' })
         }
 
         const mergeMatch = line.match(/\[Merger\] Merging formats into "(.+)"/)
@@ -225,13 +239,14 @@ export function registerDownloadIpc() {
           if (percent > lastProgress || !hasStarted) {
             lastProgress = percent
             hasStarted = true
-            sendDownloadProgress({ taskId: options.taskId, url: options.url, percent, status: 'downloading' })
+            throttledProgress({ taskId: options.taskId, url: options.url, percent, status: 'downloading' })
           }
         }
       })
 
       child.on('close', (code) => {
         activeDownloads.delete(options.taskId)
+        progressThrottles.delete(options.taskId)
         if (isPaused) { resolve({ filePath: downloadedFile, paused: true }); return }
 
         if (code !== 0) {

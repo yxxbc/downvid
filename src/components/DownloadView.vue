@@ -64,8 +64,10 @@ import UrlInput from './UrlInput.vue'
 import FormatSelector from './FormatSelector.vue'
 import DownloadQueue from './DownloadQueue.vue'
 import { useDownloadStore } from '../stores/download'
+import { useErrorModal } from '../composables/useErrorModal'
 
 const store = useDownloadStore()
+const { showError } = useErrorModal()
 
 function extractUrl(text: string): string {
   const cleanText = text.replace(/锟斤拷|锟|斤|拷/g, '').trim()
@@ -153,7 +155,7 @@ async function parseVideo() {
     else if (errorMsg.includes('ffmpeg') || errorMsg.includes('FFmpeg')) errorMsg = 'FFmpeg 未找到'
     else if (errorMsg.toLowerCase().includes('yt-dlp') && errorMsg.includes('not found')) errorMsg = 'yt-dlp 未找到'
     else if (!errorMsg || errorMsg === '解析失败') errorMsg = '无法解析该链接'
-    alert('解析失败：' + errorMsg)
+    showError('解析失败：' + errorMsg, e.message || '')
   } finally {
     clearInterval(progressInterval)
     store.isParsing = false

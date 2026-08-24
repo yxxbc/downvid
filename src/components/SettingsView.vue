@@ -223,6 +223,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
+import { useErrorModal } from '../composables/useErrorModal'
+
+const { showError, showInfo } = useErrorModal()
 
 interface Settings {
   downloadDir: string
@@ -275,7 +278,7 @@ function clearCookiesFile() {
 
 function saveSettings() {
   localStorage.setItem('settings', JSON.stringify(settings.value))
-  alert('设置已保存')
+  showInfo('设置已保存')
 }
 
 // ===== 应用日志 =====
@@ -306,9 +309,9 @@ async function loadLog() {
 async function copyLog() {
   try {
     await navigator.clipboard.writeText(logContent.value)
-    alert('日志已复制到剪贴板')
+    showInfo('日志已复制到剪贴板')
   } catch {
-    alert('复制失败，请手动选择复制')
+    showError('复制失败，请手动选择复制')
   }
 }
 
@@ -319,12 +322,12 @@ async function clearLog() {
     if (result?.success) {
       logContent.value = ''
       logTotalLines.value = 0
-      alert('日志已清空')
+      showInfo('日志已清空')
     } else {
-      alert(`清空失败: ${result?.error || '未知错误'}`)
+      showError(`清空失败: ${result?.error || '未知错误'}`)
     }
   } catch (e) {
-    alert(`清空失败: ${e instanceof Error ? e.message : '未知错误'}`)
+    showError(`清空失败: ${e instanceof Error ? e.message : '未知错误'}`)
   }
 }
 
@@ -332,7 +335,7 @@ async function openLogDir() {
   try {
     await window.electronAPI?.app?.openLogDir?.()
   } catch (e) {
-    alert(`打开日志目录失败: ${e instanceof Error ? e.message : '未知错误'}`)
+    showError(`打开日志目录失败: ${e instanceof Error ? e.message : '未知错误'}`)
   }
 }
 

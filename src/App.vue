@@ -13,6 +13,16 @@
       <AboutView v-show="currentTab === 'about'" />
       <SettingsView v-show="currentTab === 'settings'" />
     </main>
+
+    <!-- Global Error Modal -->
+    <ErrorModal
+      :visible="modalState.visible"
+      :type="modalState.type"
+      :title="modalState.title"
+      :message="modalState.message"
+      :detail="modalState.detail"
+      @update:visible="modal.close()"
+    />
   </div>
 </template>
 
@@ -23,7 +33,12 @@ import DownloadView from './components/DownloadView.vue'
 import HistoryView from './components/HistoryView.vue'
 import AboutView from './components/AboutView.vue'
 import SettingsView from './components/SettingsView.vue'
+import ErrorModal from './components/ErrorModal.vue'
+import { useErrorModal } from './composables/useErrorModal'
 import type { TabType } from './types'
+
+const modal = useErrorModal()
+const modalState = modal.state
 
 const currentTab = ref<TabType>('download')
 
