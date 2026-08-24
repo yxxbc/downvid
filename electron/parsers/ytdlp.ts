@@ -1,10 +1,262 @@
-import { dialog, shell } from 'electron'
 import { spawn } from 'node:child_process'
-import fs from 'node:fs'
 import path from 'node:path'
 import { getYtDlpPath, checkJsRuntime } from '../utils/binary'
 import { getAvailableBrowser } from '../utils/browser'
 import { LANG_NAMES } from '../constants'
+import fs from 'node:fs'
+import os from 'node:os'
+
+// 解析结果缓存
+const PARSE_CACHE_VERSION = 3
+const parseCache = new Map<string, { data: any; time: number; ver: number }>()
+const PARSE_CACHE_TTL = 30 * 60 * 1000
+
+function buildBaseArgs(isYoutube: boolean): string[] {
+  const args = [
+    '--no-playlist', '--no-check-certificates', '--no-warnings', '--quiet',
+    '--socket-timeout', '10', '--extractor-retries', '1',
+    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    '--add-header', 'Accept-Language:en-US,en;q=0.9',
+  ]
+  if (isYoutube) args.push('--extractor-args', 'youtube:skip=hls,dash')
+  return args
+}
+
+function applyCookies(args: string[], cookiesFile?: string) {
+  if (cookiesFile && fs.existsSync(cookiesFile)) {
+    args.push('--cookies', cookiesFile)
+  } else {
+    const browser = getAvailableBrowser()
+    if (browser) args.push('--cookies-from-browser', browser)
+  }
+}
+
+function applyProxy(args: string[], proxy?: string) {
+  if (proxy) args.push('--proxy', proxy)
+}
+
+function applyYoutubeRuntime(args: string[]) {
+  const runtimeCheck = checkJsRuntime()
+  if (runtimeCheck.path) {
+    const isNode = runtimeCheck.path.includes('node')
+    args.push('--js-runtimes', `${isNode ? 'node' : 'deno'}:${runtimeCheck.path}`)
+  }
+}
+
+// 快速预取：只拿标题+缩略图+时长，不拿格式列表
+export function prefetchMetadata(url: string, cookiesFile?: string, proxy?: string): Promise<any> {
+  const isYoutube = url.includes('youtube.com') || url.includes('youtu.be')
+  const args = [
+    ...buildBaseArgs(isYoutube),
+    '--print', '%()j',
+    '--no-download',
+  ]
+  applyCookies(args, cookiesFile)
+  applyProxy(args, proxy)
+  if (isYoutube) applyYoutubeRuntime(args)
+  args.push(url)
+
+  const ytdlpPath = getYtDlpPath()
+  const cwd = path.dirname(ytdlpPath)
+  const child = spawn(ytdlpPath, args, { cwd })
+  let output = ''
+  let errorOutput = ''
+
+  child.stdout?.on('data', (d: Buffer) => { output += d.toString() })
+  child.stderr?.on('data', (d: Buffer) => { errorOutput += d.toString() })
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => { child.kill(); resolve(null) }, 8000)
+    child.on('close', () => {
+      clearTimeout(timeout)
+      try {
+        const info = JSON.parse(output)
+        resolve({
+          id: info.id || '',
+          title: info.title || '未知标题',
+          thumbnail: info.thumbnail || '',
+          duration: info.duration || 0,
+          uploader: info.uploader || '',
+          webpageUrl: info.webpage_url || url,
+        })
+      } catch { resolve(null) }
+    })
+    child.on('error', () => { clearTimeout(timeout); resolve(null) })
+  })
+}
+
+// 完整解析：拿格式列表（优先用守护进程，回退到 yt-dlp CLI）
+export async function parseWithYtdlp(url: string, cookiesFile?: string, proxy?: string): Promise<any> {
+  const cacheKey = `${url}|${cookiesFile || ''}|${proxy || ''}`
+  const cached = parseCache.get(cacheKey)
+  if (cached && cached.ver === PARSE_CACHE_VERSION && Date.now() - cached.time < PARSE_CACHE_TTL) {
+    return cached.data
+  }
+
+  // 直接使用 CLI（自带 yt-dlp 二进制），不启动常驻 daemon：避免常驻 Python 内存占用与版本不一致
+  return parseViaCli(url, cookiesFile, proxy, cacheKey)
+}
+
+function cleanupCache() {
+  for (const [key, val] of parseCache) {
+    if (val.ver !== PARSE_CACHE_VERSION || Date.now() - val.time > PARSE_CACHE_TTL) parseCache.delete(key)
+  }
+}
+
+function parseViaCli(url: string, cookiesFile: string | undefined, proxy: string | undefined, cacheKey: string): Promise<any> {
+  return new Promise(async (resolve, reject) => {
+    const ytdlpPath = getYtDlpPath()
+    const isYoutube = url.includes('youtube.com') || url.includes('youtu.be')
+
+    const args = [
+      ...buildBaseArgs(isYoutube),
+      isYoutube ? '--print' : '--dump-json',
+      isYoutube ? '%()j' : '',
+    ].filter(Boolean)
+    applyCookies(args, cookiesFile)
+    applyProxy(args, proxy)
+    if (isYoutube) applyYoutubeRuntime(args)
+    args.push(url)
+
+    const cwd = path.dirname(ytdlpPath)
+    const child = spawn(ytdlpPath, args, { cwd })
+    let output = ''
+    let errorOutput = ''
+
+    child.stdout?.on('data', (d: Buffer) => { output += d.toString() })
+    child.stderr?.on('data', (d: Buffer) => { errorOutput += d.toString() })
+
+    child.on('close', (code) => {
+      if (code !== 0) { reject(new Error(errorOutput || '解析失败')); return }
+
+      try {
+        const info = JSON.parse(output)
+
+        function getResolutionLabel(height: number, fps: number): string {
+          let label = ''
+          if (height >= 2160) label = '4K'
+          else if (height >= 1440) label = '2K'
+          else if (height >= 1080) label = '1080P'
+          else if (height >= 720) label = '720P'
+          else if (height >= 480) label = '480P'
+          else if (height >= 360) label = '360P'
+          else if (height >= 240) label = '240P'
+          else label = `${height}P`
+          if (fps > 30) label += ` ${fps}fps`
+          return label
+        }
+
+        function cleanQualityLabel(raw: string): string {
+          if (!raw) return ''
+          const s = raw.trim()
+          if (/^\d{3,4}x\d{3,4}$/.test(s)) return ''
+          if (/^\d+$/.test(s)) return ''
+          const heightMatch = s.match(/(\d{3,4})\s*p/i)
+          if (heightMatch) {
+            const h = parseInt(heightMatch[1])
+            const fpsMatch = s.match(/(\d{3,4})\s*p[_\s]*(\d+)\s*(?:fps)?/i)
+            const fps = fpsMatch ? parseInt(fpsMatch[2]) : 0
+            let label = ''
+            if (h >= 2160) label = '4K'
+            else if (h >= 1440) label = '2K'
+            else label = `${h}P`
+            if (fps > 30) label += ` ${fps}fps`
+            return label
+          }
+          return ''
+        }
+
+        let formats = (info.formats || [])
+          .filter((f: any) => f.vcodec !== 'none' && f.vcodec && f.height && f.height > 0 && !(f.protocol || '').includes('m3u8'))
+          .map((f: any) => {
+            let filesize = f.filesize || f.filesize_approx || 0
+            if (!filesize && info.duration) {
+              let bitrate = f.tbr || 0
+              if (!bitrate) { bitrate = (f.vbr || 0) + (f.abr || (f.acodec && f.acodec !== 'none' ? 128 : 0)) }
+              if (bitrate > 0) filesize = Math.floor((bitrate * 1000 * info.duration) / 8)
+            }
+            const height = f.height || 0
+            const fps = f.fps || 0
+            const rawLabel = cleanQualityLabel(f.quality_label || '') || cleanQualityLabel(f.format_note || '')
+            const quality = rawLabel || getResolutionLabel(height, fps)
+            return {
+              formatId: f.format_id || '', quality,
+              ext: f.ext || f.video_ext || 'mp4', filesize,
+              width: f.width || 0, height, fps,
+              hasAudio: f.acodec && f.acodec !== 'none',
+              _tbr: f.tbr || 0, _vbr: f.vbr || 0,
+            }
+          })
+          .sort((a: any, b: any) => (b.height || 0) - (a.height || 0) || (b._tbr || 0) - (a._tbr || 0))
+          .filter((f: any, i: number, self: any[]) => {
+            const key = `${f.quality}_${f.fps || 0}`
+            const first = self.findIndex((t: any) => `${t.quality}_${t.fps || 0}` === key)
+            if (i === first) return true
+            if ((f._tbr || 0) > (self[first]._tbr || 0)) { self[first] = { ...self[first], _remove: true }; return true }
+            return false
+          })
+          .filter((f: any) => !f._remove)
+          .map(({ _tbr, _vbr, _remove, ...rest }: any) => rest) || []
+
+        // YouTube 多音轨
+        const audioTracks: any[] = []
+        if (isYoutube && info.formats) {
+          const m3u8Best: Record<string, any> = {}
+          for (const f of info.formats.filter((f: any) => f.protocol?.includes('m3u8') && f.language)) {
+            const lang = f.language
+            if (!lang) continue
+            if (!m3u8Best[lang] || (f.height || 0) > (m3u8Best[lang].height || 0)) {
+              m3u8Best[lang] = { formatId: f.format_id, lang, height: f.height || 0 }
+            }
+          }
+          if (Object.keys(m3u8Best).length > 1) {
+            for (const [lang, best] of Object.entries(m3u8Best)) {
+              audioTracks.push({ id: lang, name: LANG_NAMES[lang] || lang.toUpperCase(), language: lang, formatId: best.formatId, isM3u8: true })
+            }
+          } else {
+            const langBest: Record<string, any> = {}
+            for (const f of info.formats.filter((f: any) => f.vcodec === 'none' && f.acodec && f.acodec !== 'none')) {
+              const lang = f.language
+              if (!lang) continue
+              if (!langBest[lang] || (f.abr || 0) > (langBest[lang].abr || 0)) langBest[lang] = { formatId: f.format_id, lang, abr: f.abr || 0 }
+            }
+            for (const [lang, best] of Object.entries(langBest)) {
+              audioTracks.push({ id: lang, name: LANG_NAMES[lang] || lang.toUpperCase(), language: lang, formatId: best.formatId })
+            }
+          }
+        }
+
+        const subtitles = Object.keys(info.subtitles || {}).map((lang: string) => {
+          const sub = info.subtitles[lang]
+          const first = Array.isArray(sub) ? sub[0] : sub
+          return { language: lang, name: first?.name || lang, url: first?.url || '' }
+        })
+
+        const audioFormats = isYoutube && info.formats ? info.formats
+          .filter((f: any) => f.vcodec === 'none' && f.acodec && f.acodec !== 'none')
+          .map((f: any) => ({ formatId: f.format_id || '', quality: f.abr ? `${f.abr}kbps` : (f.format_note || '音频'), ext: f.ext || f.audio_ext || 'm4a', filesize: f.filesize || f.filesize_approx || 0, abr: f.abr || 0, acodec: f.acodec || '' }))
+          .filter((f: any, i: number, self: any[]) => self.findIndex((t: any) => t.abr === f.abr) === i)
+          .sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0)).slice(0, 6) : []
+
+        const result: any = {
+          id: info.id || '', title: info.title || '未知标题', description: info.description || '',
+          thumbnail: info.thumbnail || '', duration: info.duration || 0, uploader: info.uploader || '',
+          webpageUrl: info.webpage_url || url, formats, audioTracks, subtitles, audioFormats, isYoutube,
+        }
+        // 保存原始 info JSON：下载时用 --load-info-json 跳过 yt-dlp 二次提取
+        try {
+          result.cacheFile = path.join(os.tmpdir(), `downvid-${info.id || Date.now()}.json`)
+          fs.writeFileSync(result.cacheFile, output)
+        } catch {}
+        parseCache.set(cacheKey, { data: result, time: Date.now(), ver: PARSE_CACHE_VERSION })
+        cleanupCache()
+        resolve(result)
+      } catch (e: any) { reject(new Error('解析响应失败: ' + (e.message || '未知错误'))) }
+    })
+  })
+}
+
+import { dialog, shell } from 'electron'
 
 export async function promptNodeDownload(): Promise<void> {
   const result = await dialog.showMessageBox({
@@ -32,215 +284,4 @@ export async function promptChromeDownload(): Promise<void> {
   if (result.response === 0) {
     shell.openExternal('https://www.google.com/chrome/')
   }
-}
-
-export function parseWithYtdlp(url: string, cookiesFile?: string): Promise<any> {
-  return new Promise(async (resolve, reject) => {
-    const ytdlpPath = getYtDlpPath()
-    const isYoutube = url.includes('youtube.com') || url.includes('youtu.be')
-
-    const args: string[] = [
-      '--no-playlist',
-      '--no-check-certificates',
-      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      '--add-header', 'Accept-Language:en-US,en;q=0.9',
-      '--add-header', 'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    ]
-
-    if (isYoutube) {
-      args.unshift('--print', '%()j')
-    } else {
-      args.unshift('--dump-json')
-    }
-
-    if (isYoutube) {
-      const runtimeCheck = checkJsRuntime()
-      if (!runtimeCheck.available) {
-        await promptNodeDownload()
-        reject(new Error('需要安装 Node.js 运行时才能解析 YouTube 视频'))
-        return
-      }
-      const runtimePath = runtimeCheck.path
-      if (runtimePath) {
-        const isNode = runtimePath.includes('node')
-        args.push('--js-runtimes', `${isNode ? 'node' : 'deno'}:${runtimePath}`)
-      }
-    }
-
-    // 所有平台都支持 cookies：优先手动导入，否则自动从浏览器读取
-    if (cookiesFile && fs.existsSync(cookiesFile)) {
-      args.push('--cookies', cookiesFile)
-    } else {
-      const browser = getAvailableBrowser()
-      if (browser) args.push('--cookies-from-browser', browser)
-    }
-
-    args.push(url)
-
-    const cwd = path.dirname(ytdlpPath)
-    const child = spawn(ytdlpPath, args, { cwd })
-    let output = ''
-    let errorOutput = ''
-
-    child.stdout?.on('data', (data: Buffer) => { output += data.toString() })
-    child.stderr?.on('data', (data: Buffer) => { errorOutput += data.toString() })
-
-    child.on('close', (code: number | null) => {
-      if (code !== 0) {
-        reject(new Error(errorOutput || '解析失败'))
-        return
-      }
-
-      try {
-        const info = JSON.parse(output)
-
-        let formats = (info.formats || [])
-          .filter((f: any) => {
-            const hasVideo = f.vcodec !== 'none' && f.vcodec !== null && f.vcodec !== undefined && f.vcodec !== ''
-            const isVideoFormat = f.height && f.height > 0
-            const isM3u8 = f.protocol && f.protocol.includes('m3u8')
-            return hasVideo && isVideoFormat && !isM3u8
-          })
-          .map((f: any) => {
-            let filesize = f.filesize || f.filesize_approx || 0
-            if (!filesize && f.tbr && info.duration) {
-              filesize = Math.floor((f.tbr * 1000 * info.duration) / 8)
-            }
-            return {
-              formatId: f.format_id || '',
-              quality: f.quality_label || f.resolution || f.format_note || `${f.height}p`,
-              ext: f.ext || f.video_ext || 'mp4',
-              filesize,
-              width: f.width || 0,
-              height: f.height || 0,
-              fps: f.fps || 0,
-              hasAudio: f.acodec && f.acodec !== 'none',
-            }
-          })
-          .filter((f: any) => f.quality && f.quality !== 'undefinedp')
-          .map((f: any) => ({
-            ...f,
-            _tbr: info.formats ? info.formats.find((orig: any) => orig.format_id === f.formatId)?.tbr || 0 : 0,
-            _vbr: info.formats ? info.formats.find((orig: any) => orig.format_id === f.formatId)?.vbr || 0 : 0,
-          }))
-          .sort((a: any, b: any) => {
-            const heightDiff = (b.height || 0) - (a.height || 0)
-            if (heightDiff !== 0) return heightDiff
-            if (a.hasAudio && !b.hasAudio) return -1
-            if (!a.hasAudio && b.hasAudio) return 1
-            return (b._tbr || b._vbr || 0) - (a._tbr || a._vbr || 0)
-          })
-          .filter((f: any, index: number, self: any[]) => {
-            const firstIndex = self.findIndex((t: any) => t.quality === f.quality)
-            if (index === firstIndex) return true
-            const existing = self[firstIndex]
-            const fBitrate = f._tbr || f._vbr || 0
-            const eBitrate = existing._tbr || existing._vbr || 0
-            if (fBitrate > eBitrate) {
-              self[firstIndex] = { ...existing, _remove: true }
-              return true
-            }
-            return false
-          })
-          .filter((f: any) => !f._remove)
-          .map((f: any) => {
-            const { _tbr, _vbr, _remove, ...rest } = f
-            return rest
-          }) || []
-
-        // YouTube 多音轨
-        const audioTracks: any[] = []
-        if (isYoutube && info.formats) {
-          const m3u8BestFormat: Record<string, { formatId: string; lang: string; height: number }> = {}
-          const m3u8Formats = info.formats.filter((f: any) => f.protocol?.includes('m3u8') && f.language)
-          for (const f of m3u8Formats) {
-            const lang = f.language
-            if (!lang) continue
-            const height = f.height || 0
-            if (!m3u8BestFormat[lang] || height > m3u8BestFormat[lang].height) {
-              m3u8BestFormat[lang] = { formatId: f.format_id, lang, height }
-            }
-          }
-
-          if (Object.keys(m3u8BestFormat).length > 1) {
-            for (const [lang, best] of Object.entries(m3u8BestFormat)) {
-              audioTracks.push({
-                id: lang,
-                name: LANG_NAMES[lang] || lang.toUpperCase(),
-                language: lang,
-                formatId: best.formatId,
-                isM3u8: true,
-              })
-            }
-          } else {
-            const langBestFormat: Record<string, { formatId: string; lang: string; abr: number }> = {}
-            const audioFormats = info.formats.filter((f: any) => f.vcodec === 'none' && f.acodec && f.acodec !== 'none')
-            for (const f of audioFormats) {
-              const lang = f.language
-              if (!lang) continue
-              if (!langBestFormat[lang] || (f.abr || 0) > langBestFormat[lang].abr) {
-                langBestFormat[lang] = { formatId: f.format_id, lang, abr: f.abr || 0 }
-              }
-            }
-            for (const [lang, best] of Object.entries(langBestFormat)) {
-              audioTracks.push({
-                id: lang,
-                name: LANG_NAMES[lang] || lang.toUpperCase(),
-                language: lang,
-                formatId: best.formatId,
-              })
-            }
-          }
-
-          if (info.audio_tracks && Array.isArray(info.audio_tracks)) {
-            for (const at of info.audio_tracks) {
-              const existing = audioTracks.find(t => t.language === at.language)
-              if (existing && at.name) existing.name = at.name
-            }
-          }
-        }
-
-        // 字幕
-        const subtitles = info.subtitles || {}
-        const subtitleList = Object.keys(subtitles).map((lang: string) => {
-          const subData = subtitles[lang]
-          const firstSub = Array.isArray(subData) ? subData[0] : subData
-          return { language: lang || '', name: firstSub?.name || lang || '', url: firstSub?.url || '' }
-        })
-
-        // 纯音频格式
-        const audioFormats = isYoutube && info.formats ? info.formats
-          .filter((f: any) => f.vcodec === 'none' && f.acodec && f.acodec !== 'none')
-          .map((f: any) => ({
-            formatId: f.format_id || '',
-            quality: f.abr ? `${f.abr}kbps` : (f.format_note || '音频'),
-            ext: f.ext || f.audio_ext || 'm4a',
-            filesize: f.filesize || f.filesize_approx || 0,
-            abr: f.abr || 0,
-            acodec: f.acodec || '',
-          }))
-          .filter((f: any, index: number, self: any[]) => self.findIndex((t: any) => t.abr === f.abr) === index)
-          .sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0))
-          .slice(0, 6)
-        : []
-
-        resolve({
-          id: info.id || '',
-          title: info.title || '未知标题',
-          description: info.description || '',
-          thumbnail: info.thumbnail || '',
-          duration: info.duration || 0,
-          uploader: info.uploader || '',
-          webpageUrl: info.webpage_url || url,
-          formats,
-          audioTracks,
-          subtitles: subtitleList,
-          audioFormats,
-          isYoutube,
-        })
-      } catch (e: any) {
-        reject(new Error('解析响应失败: ' + (e.message || '未知错误')))
-      }
-    })
-  })
 }
