@@ -8,7 +8,7 @@
         </span>
         <button
           class="p-1.5 text-on-surface-variant hover:text-on-surface rounded-sm hover:bg-surface-container-highest transition-colors"
-          @click="store.clearCompletedTasks()"
+          @click="clearCompleted"
         >
           <MaterialIcon name="clear_all" :size="18" />
         </button>
@@ -52,7 +52,7 @@
               <h4 class="font-headline text-xs font-bold truncate" :class="task.status === 'pending' ? 'text-on-surface opacity-70' : 'text-on-surface'">
                 {{ task.videoInfo.title }}
               </h4>
-              <button class="text-on-surface-variant hover:text-error transition-colors flex-shrink-0" @click="store.removeTask(task.id)">
+              <button class="text-on-surface-variant hover:text-error transition-colors flex-shrink-0" @click="removeTask(task.id)">
                 <MaterialIcon name="close" :size="14" />
               </button>
             </div>
@@ -66,7 +66,7 @@
                   <span v-else>正在下载...</span>
                 </span>
                 <div class="flex items-center gap-2">
-                  <button class="text-on-surface-variant hover:text-amber transition-colors" @click="store.pauseTask(task.id)" title="暂停下载">
+                  <button class="text-on-surface-variant hover:text-amber transition-colors" @click="pauseTask(task.id)" title="暂停下载">
                     <MaterialIcon name="pause" :size="14" />
                   </button>
                   <span class="font-bold text-primary">{{ Math.round(task.progress || 0) }}%</span>
@@ -82,7 +82,7 @@
               <div class="flex items-center justify-between text-[10px] text-on-surface-variant font-mono">
                 <span class="text-amber">已暂停</span>
                 <div class="flex items-center gap-2">
-                  <button class="text-on-surface-variant hover:text-primary transition-colors" @click="store.resumeTask(task)" title="继续下载">
+                  <button class="text-on-surface-variant hover:text-primary transition-colors" @click="resumeTask(task)" title="继续下载">
                     <MaterialIcon name="play_arrow" :size="14" />
                   </button>
                   <span class="font-bold text-amber">{{ Math.round(task.progress || 0) }}%</span>
@@ -165,5 +165,21 @@ async function selectDownloadDir() {
     settings.downloadDir = dir
     localStorage.setItem('settings', JSON.stringify(settings))
   }
+}
+
+function clearCompleted() {
+  store.clearCompletedTasks()
+}
+
+function removeTask(id: string) {
+  store.removeTask(id)
+}
+
+function pauseTask(id: string) {
+  store.pauseTask(id)
+}
+
+function resumeTask(task: DownloadTask) {
+  store.resumeTask(task)
 }
 </script>
