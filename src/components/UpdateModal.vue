@@ -245,7 +245,11 @@ async function downloadUpdate() {
   downloadPercent.value = 0
   downloadSpeed.value = '准备下载...'
   try {
-    await window.electronAPI?.downloadUpdate?.()
+    const result = await window.electronAPI?.downloadUpdate?.()
+    if (result && !result.success) {
+      status.value = 'error'
+      errorMsg.value = result.error || '下载更新失败'
+    }
   } catch {
     status.value = 'error'
     errorMsg.value = '下载更新失败'

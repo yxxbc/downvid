@@ -155,5 +155,11 @@ async function openFolder(item: HistoryRecord) {
 
 onMounted(() => {
   loadHistory()
+  // 订阅主进程广播，实时刷新历史列表
+  if (window.electronAPI?.history?.onUpdated) {
+    window.electronAPI.history.onUpdated((updatedHistory) => {
+      history.value = updatedHistory
+    })
+  }
 })
 </script>

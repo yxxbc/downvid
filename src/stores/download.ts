@@ -187,14 +187,18 @@ export const useDownloadStore = defineStore('download', () => {
         downloadTasks.value[finalIdx].progress = 100
       }
 
-      await window.electronAPI.history.add({
-        title: task.videoInfo.title,
-        thumbnail: task.videoInfo.thumbnail,
-        url: task.url,
-        filePath: (result as any).filePath,
-        format: task.selectedFormat.ext,
-        quality: task.selectedFormat.quality,
-      })
+      try {
+        await window.electronAPI.history.add({
+          title: task.videoInfo.title,
+          thumbnail: task.videoInfo.thumbnail,
+          url: task.url,
+          filePath: (result as any).filePath,
+          format: task.selectedFormat.ext,
+          quality: task.selectedFormat.quality,
+        })
+      } catch (historyErr) {
+        console.error('Failed to add history record:', historyErr)
+      }
     } catch (e: any) {
       let errorMsg = e.message || '下载失败'
       if (errorMsg.includes('disk') || errorMsg.includes('space')) errorMsg = '磁盘空间不足'

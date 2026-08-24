@@ -30,15 +30,16 @@ export function registerHistoryIpc() {
     const history = readHistory()
     const newRecord = { ...record, id: Date.now().toString(), createdAt: new Date().toISOString() }
     history.unshift(newRecord)
-    writeHistory(history.slice(0, 100))
-    notifyHistoryUpdated(readHistory())
+    const trimmed = history.slice(0, 100)
+    writeHistory(trimmed)
+    notifyHistoryUpdated(trimmed)
     return true
   })
 
   ipcMain.handle('history:delete', async (_, id: string) => {
     const history = readHistory().filter((h: any) => h.id !== id)
     writeHistory(history)
-    notifyHistoryUpdated(readHistory())
+    notifyHistoryUpdated(history)
     return true
   })
 }
