@@ -148,8 +148,9 @@ async function openFile(item: HistoryRecord) {
 }
 
 async function openFolder(item: HistoryRecord) {
-  const path = item.filePath.substring(0, item.filePath.lastIndexOf('\\'))
-  await window.electronAPI.shell.openPath(path)
+  const sep = item.filePath.includes('\\') ? '\\' : '/'
+  const dir = item.filePath.substring(0, item.filePath.lastIndexOf(sep))
+  await window.electronAPI.shell.openPath(dir)
 }
 
 onMounted(() => {

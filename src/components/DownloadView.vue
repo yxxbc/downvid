@@ -40,12 +40,12 @@
               <MaterialIcon name="sync" :size="16" class="animate-spin" />
               <span class="tracking-wide">正在提取视频元数据...</span>
             </div>
-            <span class="font-mono text-primary font-bold">{{ store.parseProgress }}%</span>
+            <span class="font-mono text-primary font-bold">{{ Math.min(Math.round(store.parseProgress), 100) }}%</span>
           </div>
           <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
             <div
               class="h-full bg-[#FFB347] rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(255,179,71,0.4)]"
-              :style="{ width: store.parseProgress + '%' }"
+              :style="{ width: Math.min(store.parseProgress, 100) + '%' }"
             />
           </div>
         </div>
@@ -110,20 +110,39 @@ async function parseVideo() {
   const extractedUrl = extractUrl(store.url)
   if (extractedUrl !== store.url) store.url = extractedUrl
 
+  // 预校验 URL 格式
+  try {
+    const parsed = new URL(store.url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      showError('请输入有效的链接', `不支持的协议: ${parsed.protocol}`)
+      return
+    }
+  } catch {
+    showError('请输入有效的链接', `无法解析的 URL: ${store.url}`)
+    return
+  }
+
   store.isParsing = true
   store.parseProgress = 0
   store.videoInfo = null
   store.selectedFormat = null
 
+  const settings = JSON.parse(localStorage.getItem('settings') || '{}')
+  const cookieMode = settings.cookieMode || 'auto'
+  const cookiesFile = cookieMode === 'manual' ? (settings.cookiesFile || '') : ''
+  const proxy = settings.proxy || ''
+
+  // 模拟进度
+  let target = 0
   const progressInterval = setInterval(() => {
-    if (store.parseProgress < 90) store.parseProgress += Math.random() * 15
+    if (target < 90) {
+      target += (90 - target) * 0.08 + 0.5
+      store.parseProgress = Math.min(target, 90)
+    }
   }, 200)
 
   try {
-    const settings = JSON.parse(localStorage.getItem('settings') || '{}')
-    const cookieMode = settings.cookieMode || 'auto'
-    const cookiesFile = cookieMode === 'manual' ? (settings.cookiesFile || '') : ''
-    const info = await window.electronAPI.ytdlp.parse(store.url, cookiesFile)
+    const info = await window.electronAPI.ytdlp.parse(store.url, cookiesFile, proxy)
     store.videoInfo = info
 
     if (isBilibiliUrl(store.url) && info.thumbnail) {
@@ -145,19 +164,22 @@ async function parseVideo() {
       store.selectedAudioTrack = null
     }
 
+    clearInterval(progressInterval)
     store.parseProgress = 100
   } catch (e: any) {
-    let errorMsg = e.message || '未知错误'
+    clearInterval(progressInterval)
+    const rawError = e.message || '未知错误'
+    let errorMsg = rawError
     if (errorMsg.includes('not a valid URL') || errorMsg.includes('Unsupported URL')) errorMsg = '请输入有效的链接'
     else if (errorMsg.includes('not found') || errorMsg.includes('404')) errorMsg = '视频不存在或已被删除'
     else if (errorMsg.includes('private') || errorMsg.includes('登录')) errorMsg = '该视频需要登录才能访问'
     else if (errorMsg.includes('network') || errorMsg.includes('timeout')) errorMsg = '网络连接超时'
     else if (errorMsg.includes('ffmpeg') || errorMsg.includes('FFmpeg')) errorMsg = 'FFmpeg 未找到'
     else if (errorMsg.toLowerCase().includes('yt-dlp') && errorMsg.includes('not found')) errorMsg = 'yt-dlp 未找到'
+    else if (errorMsg.includes('No video formats found')) errorMsg = '未找到可下载的视频格式，可能需要 Cookie 或视频已失效'
     else if (!errorMsg || errorMsg === '解析失败') errorMsg = '无法解析该链接'
-    showError('解析失败：' + errorMsg, e.message || '')
+    showError('解析失败：' + errorMsg, rawError)
   } finally {
-    clearInterval(progressInterval)
     store.isParsing = false
   }
 }
@@ -176,6 +198,11 @@ async function loadDownloadDir() {
 
 onMounted(async () => {
   await loadDownloadDir()
+  // 应用代理设置
+  const settings = JSON.parse(localStorage.getItem('settings') || '{}')
+  if (settings.proxy) {
+    window.electronAPI.app.setProxy(settings.proxy)
+  }
   window.addEventListener('tab-changed', async (e: any) => {
     if (e.detail === 'download') await loadDownloadDir()
   })

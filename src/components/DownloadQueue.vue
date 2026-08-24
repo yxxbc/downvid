@@ -121,7 +121,7 @@
     <div class="mt-auto pt-4 border-t border-outline-variant/10 flex items-center justify-between text-[11px] text-on-surface-variant">
       <div class="flex items-center gap-2">
         <MaterialIcon name="storage" :size="14" />
-        <span>存储空间: 可用</span>
+        <span>存储空间: {{ diskSpaceDisplay }}</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="font-mono">{{ store.downloadDir }}</span>
@@ -134,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
 import { useDownloadStore } from '../stores/download'
 import type { DownloadTask } from '../types'
@@ -142,6 +142,27 @@ import type { DownloadTask } from '../types'
 const store = useDownloadStore()
 
 const activeTaskCount = computed(() => store.activeTaskCount)
+const diskSpaceDisplay = ref('加载中...')
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`
+}
+
+async function loadDiskSpace() {
+  try {
+    const result = await window.electronAPI.app.getDiskSpace(store.downloadDir)
+    if (result && result.total > 0) {
+      diskSpaceDisplay.value = `${formatBytes(result.free)} / ${formatBytes(result.total)}`
+    } else {
+      diskSpaceDisplay.value = '未知'
+    }
+  } catch {
+    diskSpaceDisplay.value = '未知'
+  }
+}
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return ''
@@ -182,4 +203,8 @@ function pauseTask(id: string) {
 function resumeTask(task: DownloadTask) {
   store.resumeTask(task)
 }
+
+onMounted(() => {
+  loadDiskSpace()
+})
 </script>

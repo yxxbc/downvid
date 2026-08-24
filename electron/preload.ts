@@ -43,6 +43,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getLog: () => ipcRenderer.invoke('app:getLog'),
     clearLog: () => ipcRenderer.invoke('app:clearLog'),
     openLogDir: () => ipcRenderer.invoke('app:openLogDir'),
+    setProxy: (proxy: string) => ipcRenderer.invoke('app:setProxy', proxy),
+    testProxy: (proxy: string) => ipcRenderer.invoke('app:testProxy', proxy),
+    getDiskSpace: (dir?: string) => ipcRenderer.invoke('app:getDiskSpace', dir),
   },
   
   // 系统操作
@@ -53,8 +56,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // YT-DLP 操作
   ytdlp: {
-    parse: (url: string, cookiesFile?: string) => ipcRenderer.invoke('ytdlp:parse', url, cookiesFile),
-    download: (options: { url: string; formatId: string; outputDir: string; filename?: string; taskId: string; directUrl?: string; cookiesFile?: string; downloadMode?: 'video' | 'audio'; audioTrack?: any; subtitles?: string[] }) => 
+    parse: (url: string, cookiesFile?: string, proxy?: string) => ipcRenderer.invoke('ytdlp:parse', url, cookiesFile, proxy),
+    download: (options: { url: string; formatId: string; outputDir: string; filename?: string; taskId: string; directUrl?: string; cookiesFile?: string; downloadMode?: 'video' | 'audio'; audioTrack?: any; subtitles?: string[]; proxy?: string; cacheFile?: string }) => 
       ipcRenderer.invoke('ytdlp:download', options),
     pauseDownload: (taskId: string) => ipcRenderer.invoke('ytdlp:pauseDownload', taskId),
   },
@@ -103,6 +106,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => {
       ipcRenderer.off('menu:showAbout', handler)
     }
+  },
+
+  // 窗口控制
+  window: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    maximize: () => ipcRenderer.invoke('window:maximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
   },
 })
 
