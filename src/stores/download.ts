@@ -159,6 +159,7 @@ export const useDownloadStore = defineStore('download', () => {
       const cookieMode = settings.cookieMode || 'auto'
       const cookiesFile = cookieMode === 'manual' ? (settings.cookiesFile || '') : ''
       const filenameTemplate = settings.filenameTemplate || '%(title)s'
+      const proxy = settings.proxy || ''
 
       const downloadOptions: any = {
         url: task.url,
@@ -169,6 +170,7 @@ export const useDownloadStore = defineStore('download', () => {
         filename: useDirectDownload && directUrl ? `${sanitizeFilename(task.videoInfo.title).slice(0, 50)}_${task.selectedFormat.quality}.mp4` : undefined,
         cookiesFile,
         filenameTemplate,
+        proxy,
       }
 
       if ((task as any).downloadMode === 'audio') downloadOptions.downloadMode = 'audio'
