@@ -68,19 +68,29 @@ function buildFormatsFromBitRate(bitRate: any[], duration: number): any[] {
         let qualityKey = 'default'
         let height = br.height || 0
 
-        if (br.gear_name) {
+        // 优先级：height > gear_name 提取数字 > gear_name 原文
+        if (height > 0) {
+          quality = `${height}P`
+          qualityKey = String(height)
+        } else if (br.gear_name) {
           const match = br.gear_name.match(/(\d+)/)
           if (match) {
-            quality = `${match[1]}p`
+            quality = `${match[1]}P`
             qualityKey = match[1]
             height = parseInt(match[1])
           } else {
-            quality = br.gear_name
+            // 中文 gear_name 映射到常见分辨率
+            const gearMap: Record<string, string> = {
+              '超清': '1080P',
+              '高清': '720P',
+              '标清': '480P',
+              '流畅': '360P',
+              '4K': '2160P',
+              '2K': '1440P',
+            }
+            quality = gearMap[br.gear_name] || br.gear_name
             qualityKey = br.gear_name
           }
-        } else if (br.height) {
-          quality = `${br.height}p`
-          qualityKey = String(br.height)
         }
 
         let filesize = br.data_size || 0
@@ -231,14 +241,6 @@ export async function parseDouyinWithPuppeteer(url: string, cookiesFile?: string
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     await page.setViewport({ width: 1920, height: 1080 })
 
-    // 设置 cookies（需要先访问域名才能设置）
-    if (puppeteerCookies.length > 0) {
-      try {
-        await page.goto('https://www.douyin.com/', { waitUntil: 'domcontentloaded', timeout: 15000 })
-        await page.setCookie(...puppeteerCookies)
-      } catch {}
-    }
-
     let videoData: any = null
     let renderData: any = null
 
@@ -254,21 +256,18 @@ export async function parseDouyinWithPuppeteer(url: string, cookiesFile?: string
       }
     })
 
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    // 先访问视频页面，然后设置 cookies，再刷新（避免额外访问首页）
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 })
 
-    await page.evaluate(async () => {
-      const container = document.querySelector('.video-container') ||
-                        document.querySelector('[data-e2e="video-container"]') ||
-                        document.querySelector('.short-video') ||
-                        document.body
-      container?.scrollIntoView({ behavior: 'instant', block: 'center' })
-      await new Promise(r => setTimeout(r, 2000))
-      const playBtn = document.querySelector('.play-button') ||
-                      document.querySelector('[data-e2e="play-button"]') ||
-                      document.querySelector('.video-play')
-      if (playBtn) { (playBtn as HTMLElement).click(); await new Promise(r => setTimeout(r, 1000)) }
-    })
+    if (puppeteerCookies.length > 0) {
+      try {
+        await page.setCookie(...puppeteerCookies)
+        await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 })
+      } catch {}
+    }
+
+    // 等待页面渲染数据
+    await new Promise(resolve => setTimeout(resolve, 1500))
 
     renderData = await page.evaluate(() => {
       const ssrData = (window as any)._SSR_HYDRATED_DATA
