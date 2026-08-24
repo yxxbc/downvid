@@ -36,6 +36,14 @@
 
 > 基于 [Videdown](https://github.com/cshuangyy/videdown) by cshuangyy (MIT License) 二次开发
 
+---
+
+**⚠️ 免责声明**
+
+本项目是 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 的 GUI 套壳封装，仅提供图形界面，不包含任何破解或绕过技术保护措施的代码。
+
+本工具仅供学习研究，请勿用于商业用途。下载内容需遵守当地法律法规，用户需自行承担使用责任。
+
 </div>
 
 ---
