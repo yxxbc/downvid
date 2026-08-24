@@ -4,16 +4,38 @@
 
 ## [Unreleased]
 
+---
+
+## [1.1.0] - 2026-08-24
+
 ### 新增
-- 跨平台支持：macOS (ARM64/x64)、Windows (x64)、Linux (x64/ARM64)
-- 自动更新系统 (electron-updater + GitHub Releases)
-- 一键下载依赖脚本 `bin/download-deps.sh`
-- GitHub Actions CI/CD 自动构建多平台发布
-- 项目模块化重构
+- 自定义错误弹窗：可复制错误信息 + 一键提交 GitHub Issue
+- 代理设置：全局代理支持 http/https/socks5，保存即生效，带连接测试
+- 启动时自动检查更新，有新版本自动弹窗提醒
+- 解析结果缓存：同一 URL 30 分钟内重复解析秒出
+- 任务队列实时显示磁盘可用空间
+- 贡献者页面显示 Bot 标签和开发者标签
+- macOS/Windows/Linux 窗口行为适配：自定义标题栏、拖拽、窗口控制按钮
+- 设置页面改为右侧浮层面板 + 左侧栏分类导航（下载/Cookies/代理）
+- 解析结果分辨率标签智能清理：自动将 `1080p60`、`hd1080`、`sd480` 等格式转为标准显示
+- Puppeteer 浏览器实例复用池，解析速度大幅提升
+- GitHub Dependabot 自动依赖更新
+
+### 修复
+- 下载任务 status 误设为 downloading 导致 IPC 调用永不执行
+- 下载历史"打开文件夹"在 macOS 上路径错误（Windows 路径分隔符问题）
+- 进度条超过 100% 的问题
+- 进度条动画平滑度优化（指数衰减）
+- 文件大小估算逻辑：优先使用平台提供的 quality_label 而非像素推算
+- 下载进度实时更新：stderr 进度解析 + 本地速度计算兜底
+- 所有 alert() 替换为自定义弹窗
+- 解析流程添加顶层 try-catch，防止未捕获异常导致 renderer 崩溃
+- Renderer 崩溃后自动重载
 
 ### 变更
-- 项目名称从 Videdown 改为 DownVid
-- electron/main.ts 拆分为多个模块
+- 进度更新节流从 500ms 降至 200ms
+- yt-dlp 解析添加 `--no-warnings --quiet` 减少开销
+- 自动更新不再需要手动点击检查
 
 ---
 
