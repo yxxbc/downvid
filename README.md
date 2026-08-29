@@ -357,6 +357,6 @@ A: 右键点击应用，选择"打开"，或在"系统设置 → 隐私与安全
 
 如果这个项目对你有帮助，欢迎给个 ⭐ Star 支持一下！
 
-Made with ❤️ by DownVid Team
+Made with ❤️ by yxxbc
 
 </div>
