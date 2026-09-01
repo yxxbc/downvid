@@ -58,6 +58,7 @@
   - [从源码构建](#从源码构建)
 - [文档](#-文档)
 - [技术栈](#-技术栈)
+- [架构图](#-架构图)
 - [项目结构](#-项目结构)
 - [贡献指南](#-贡献指南)
 - [常见问题](#-常见问题)
@@ -231,6 +232,18 @@ pnpm build:linux    # Linux
 | [![yt-dlp](https://img.shields.io/badge/yt--dlp-latest-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp) | 强大的视频下载引擎 |
 | [![FFmpeg](https://img.shields.io/badge/FFmpeg-latest-007808?style=flat-square&logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | 音视频处理工具 |
 | [![electron-builder](https://img.shields.io/badge/electron--builder-24-000000?style=flat-square&logo=electron&logoColor=white)](https://www.electron.build/) | 应用打包与发布 |
+
+---
+
+## 📐 架构图
+
+<details>
+<summary>点击展开完整架构图（也可直接查看 <a href="docs/architecture.html">交互式版本</a>）</summary>
+<br />
+
+<img src="docs/architecture.svg" alt="DownVid Architecture" width="100%" />
+
+</details>
 
 ---
 
