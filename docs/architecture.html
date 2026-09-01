@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DownVid Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:#020617;min-height:100vh;padding:2rem;color:white}
+.container{max-width:1200px;margin:0 auto}
+.header{margin-bottom:2rem}
+.header-row{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem}
+.pulse-dot{width:12px;height:12px;background:#22d3ee;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+h1{font-size:1.5rem;font-weight:700;letter-spacing:-0.025em}
+.subtitle{color:#94a3b8;font-size:0.875rem;margin-left:1.75rem}
+.diagram-container{background:rgba(15,23,42,0.5);border-radius:1rem;border:1px solid #1e293b;padding:1.5rem;overflow-x:auto}
+svg{width:100%;min-width:900px;display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:2rem}
+.card{background:rgba(15,23,42,0.5);border-radius:0.75rem;border:1px solid #1e293b;padding:1.25rem}
+.card-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem}
+.card-dot{width:8px;height:8px;border-radius:50%}
+.cyan{background:#22d3ee}.emerald{background:#34d399}.violet{background:#a78bfa}.amber{background:#fbbf24}.rose{background:#fb7185}
+.card h3{font-size:0.875rem;font-weight:600}
+.card ul{list-style:none;color:#94a3b8;font-size:0.75rem}
+.card li{margin-bottom:0.375rem}
+.footer{text-align:center;margin-top:1.5rem;color:#475569;font-size:0.75rem}
+.toolbar{display:flex;gap:0.5rem;margin-left:auto;flex-shrink:0;align-items:center}
+.toolbar-toggle{background:0 0;border:none;color:#475569;cursor:pointer;font-size:1.25rem;line-height:1;padding:0.25rem 0.5rem;border-radius:0.375rem;transition:color .2s,background .2s}
+.toolbar-toggle:hover{color:#94a3b8;background:rgba(30,41,59,0.5)}
+.toolbar-actions{display:none;gap:0.5rem}
+.toolbar.expanded .toolbar-actions{display:flex}
+.toolbar-actions button{background:rgba(30,41,59,0.8);border:1px solid #334155;color:#94a3b8;padding:0.375rem 0.75rem;border-radius:0.375rem;font-family:inherit;font-size:0.75rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.toolbar-actions button:hover{background:rgba(51,65,85,0.8);color:white;border-color:#475569}
+@media print{body{background:#020617;padding:1rem}.toolbar{display:none!important}}
+</style>
+</head>
+<body>
+<div class="container" id="report-container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1>DownVid Architecture</h1>
+      <div class="toolbar">
+        <div class="toolbar-actions">
+          <button onclick="copyAsImage(this)">📋 Copy</button>
+          <button onclick="downloadPNG(this)">🖼️ PNG</button>
+          <button onclick="downloadPDF(this)">📄 PDF</button>
+        </div>
+        <button class="toolbar-toggle" onclick="this.parentElement.classList.toggle('expanded')" title="Export">⋯</button>
+      </div>
+    </div>
+    <p class="subtitle">Electron + Vue 3 multi-platform video downloader · yt-dlp backend</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 760">
+      <defs>
+        <marker id="a" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#64748b"/></marker>
+        <marker id="ac" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#22d3ee"/></marker>
+        <marker id="ae" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#34d399"/></marker>
+        <marker id="av" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#a78bfa"/></marker>
+        <marker id="af" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#fbbf24"/></marker>
+        <marker id="ar" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#fb7185"/></marker>
+        <marker id="ao" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#fb923c"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0L0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+      <!-- ARROWS -->
+      <line x1="300" y1="610" x2="300" y2="500" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#ac)"/>
+      <text x="312" y="558" fill="#22d3ee" font-size="8">IPC invoke</text>
+      <line x1="420" y1="500" x2="420" y2="610" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ac)"/>
+      <text x="432" y="558" fill="#22d3ee" font-size="8">IPC send</text>
+      <line x1="350" y1="460" x2="200" y2="380" stroke="#34d399" stroke-width="1.5" marker-end="url(#ae)"/>
+      <text x="265" y="415" fill="#34d399" font-size="8">dispatch</text>
+      <line x1="310" y1="355" x2="400" y2="355" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#av)"/>
+      <text x="355" y="348" fill="#a78bfa" font-size="7">fallback</text>
+      <line x1="500" y1="460" x2="500" y2="360" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#af)"/>
+      <text x="512" y="412" fill="#fbbf24" font-size="7">spawn</text>
+      <line x1="600" y1="460" x2="600" y2="360" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#af)"/>
+      <text x="612" y="412" fill="#fbbf24" font-size="7">merge</text>
+      <line x1="120" y1="305" x2="120" y2="270" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+      <line x1="250" y1="305" x2="250" y2="270" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+      <line x1="185" y1="340" x2="380" y2="340" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#ar)"/>
+      <line x1="700" y1="460" x2="700" y2="270" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a)"/>
+      <line x1="830" y1="460" x2="830" y2="270" stroke="#fb923c" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ao)"/>
+      <!-- TOP: External Services -->
+      <rect x="60" y="225" width="120" height="45" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="120" y="244" fill="white" font-size="10" font-weight="600" text-anchor="middle">Douyin API</text>
+      <text x="120" y="259" fill="#94a3b8" font-size="8" text-anchor="middle">CDN direct URL</text>
+      <rect x="190" y="225" width="120" height="45" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="250" y="244" fill="white" font-size="10" font-weight="600" text-anchor="middle">Kuaishou API</text>
+      <text x="250" y="259" fill="#94a3b8" font-size="8" text-anchor="middle">CDN direct URL</text>
+      <rect x="640" y="225" width="120" height="45" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="700" y="244" fill="white" font-size="10" font-weight="600" text-anchor="middle">GitHub API</text>
+      <text x="700" y="259" fill="#94a3b8" font-size="8" text-anchor="middle">releases, contributors</text>
+      <rect x="770" y="225" width="120" height="45" rx="6" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1.5"/>
+      <text x="830" y="244" fill="white" font-size="10" font-weight="600" text-anchor="middle">Auto Updater</text>
+      <text x="830" y="259" fill="#94a3b8" font-size="8" text-anchor="middle">electron-updater</text>
+      <!-- Puppeteer -->
+      <rect x="330" y="322" width="130" height="40" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="395" y="340" fill="white" font-size="9" font-weight="600" text-anchor="middle">Puppeteer</text>
+      <text x="395" y="353" fill="#94a3b8" font-size="7" text-anchor="middle">headless Chrome/Edge</text>
+      <!-- BINARIES -->
+      <rect x="430" y="322" width="140" height="40" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="500" y="340" fill="white" font-size="10" font-weight="600" text-anchor="middle">yt-dlp</text>
+      <text x="500" y="353" fill="#94a3b8" font-size="7" text-anchor="middle">bin/platform/arch</text>
+      <rect x="530" y="322" width="140" height="40" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="600" y="340" fill="white" font-size="10" font-weight="600" text-anchor="middle">ffmpeg</text>
+      <text x="600" y="353" fill="#94a3b8" font-size="7" text-anchor="middle">audio/video merge</text>
+      <!-- PARSERS BOUNDARY -->
+      <rect x="30" y="290" width="310" height="110" rx="12" fill="rgba(6,78,59,0.05)" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4"/>
+      <text x="42" y="305" fill="#34d399" font-size="9" font-weight="600">Parsers (electron/parsers/)</text>
+      <rect x="50" y="312" width="100" height="45" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="100" y="331" fill="white" font-size="9" font-weight="600" text-anchor="middle">Douyin</text>
+      <text x="100" y="345" fill="#94a3b8" font-size="7" text-anchor="middle">API then Puppeteer</text>
+      <rect x="160" y="312" width="100" height="45" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="210" y="331" fill="white" font-size="9" font-weight="600" text-anchor="middle">Kuaishou</text>
+      <text x="210" y="345" fill="#94a3b8" font-size="7" text-anchor="middle">API then Puppeteer</text>
+      <rect x="270" y="312" width="60" height="45" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="300" y="331" fill="white" font-size="9" font-weight="600" text-anchor="middle">yt-dlp</text>
+      <text x="300" y="345" fill="#94a3b8" font-size="7" text-anchor="middle">fallback</text>
+      <!-- MAIN PROCESS BOUNDARY -->
+      <rect x="30" y="420" width="940" height="80" rx="12" fill="rgba(52,211,153,0.05)" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4"/>
+      <text x="42" y="435" fill="#34d399" font-size="9" font-weight="600">Electron Main Process (Node.js)</text>
+      <rect x="50" y="445" width="100" height="40" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="100" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">main.ts</text>
+      <rect x="160" y="445" width="130" height="40" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="225" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">ipc/download.ts</text>
+      <rect x="300" y="445" width="120" height="40" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="360" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">ipc/history.ts</text>
+      <rect x="430" y="445" width="90" height="40" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="475" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">store.ts</text>
+      <rect x="530" y="445" width="100" height="40" rx="6" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1.5"/>
+      <text x="580" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">updater.ts</text>
+      <rect x="640" y="445" width="100" height="40" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="690" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">ipc/app.ts</text>
+      <rect x="750" y="445" width="130" height="40" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="815" y="469" fill="white" font-size="9" font-weight="600" text-anchor="middle">history.json</text>
+      <!-- PRELOAD BRIDGE -->
+      <rect x="200" y="520" width="600" height="38" rx="6" fill="rgba(251,191,36,0.2)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="500" y="543" fill="white" font-size="9" font-weight="600" text-anchor="middle">preload.ts — contextBridge (electronAPI)</text>
+      <!-- RENDERER PROCESS BOUNDARY -->
+      <rect x="30" y="575" width="940" height="140" rx="12" fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1" stroke-dasharray="8,4"/>
+      <text x="42" y="590" fill="#22d3ee" font-size="9" font-weight="600">Vue 3 Renderer Process (Browser)</text>
+      <rect x="50" y="600" width="160" height="45" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="130" y="619" fill="white" font-size="10" font-weight="600" text-anchor="middle">Pinia Store</text>
+      <text x="130" y="634" fill="#94a3b8" font-size="7" text-anchor="middle">download.ts — queue, state</text>
+      <rect x="230" y="600" width="130" height="45" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="295" y="619" fill="white" font-size="10" font-weight="600" text-anchor="middle">DownloadView</text>
+      <text x="295" y="634" fill="#94a3b8" font-size="7" text-anchor="middle">URL input + formats</text>
+      <rect x="370" y="600" width="120" height="45" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="430" y="619" fill="white" font-size="10" font-weight="600" text-anchor="middle">Queue</text>
+      <text x="430" y="634" fill="#94a3b8" font-size="7" text-anchor="middle">active downloads</text>
+      <rect x="500" y="600" width="110" height="45" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="555" y="619" fill="white" font-size="10" font-weight="600" text-anchor="middle">History</text>
+      <text x="555" y="634" fill="#94a3b8" font-size="7" text-anchor="middle">past downloads</text>
+      <rect x="620" y="600" width="110" height="45" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="675" y="619" fill="white" font-size="10" font-weight="600" text-anchor="middle">Settings</text>
+      <text x="675" y="634" fill="#94a3b8" font-size="7" text-anchor="middle">cookies, proxy, dir</text>
+      <rect x="740" y="600" width="110" height="45" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="795" y="619" fill="white" font-size="10" font-weight="600" text-anchor="middle">About</text>
+      <text x="795" y="634" fill="#94a3b8" font-size="7" text-anchor="middle">version, contributors</text>
+      <rect x="50" y="655" width="160" height="28" rx="4" fill="rgba(76,29,149,0.2)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="130" y="673" fill="#a78bfa" font-size="8" text-anchor="middle">localStorage settings</text>
+      <!-- LEGEND -->
+      <rect x="720" y="70" width="250" height="145" rx="8" fill="rgba(15,23,42,0.8)" stroke="#1e293b" stroke-width="1"/>
+      <text x="732" y="88" fill="white" font-size="10" font-weight="600">Legend</text>
+      <rect x="732" y="98" width="14" height="9" rx="2" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="752" y="106" fill="#94a3b8" font-size="8">Frontend (Vue 3)</text>
+      <rect x="732" y="112" width="14" height="9" rx="2" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1"/>
+      <text x="752" y="120" fill="#94a3b8" font-size="8">Backend (Main Process)</text>
+      <rect x="732" y="126" width="14" height="9" rx="2" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1"/>
+      <text x="752" y="134" fill="#94a3b8" font-size="8">Binary (yt-dlp, ffmpeg)</text>
+      <rect x="732" y="140" width="14" height="9" rx="2" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="752" y="148" fill="#94a3b8" font-size="8">Storage (Pinia, JSON)</text>
+      <rect x="732" y="154" width="14" height="9" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1"/>
+      <text x="752" y="162" fill="#94a3b8" font-size="8">Browser automation</text>
+      <rect x="732" y="168" width="14" height="9" rx="2" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1"/>
+      <text x="752" y="176" fill="#94a3b8" font-size="8">Update system</text>
+      <line x1="732" y1="188" x2="746" y2="188" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="752" y="191" fill="#94a3b8" font-size="8">External API call</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-header"><div class="card-dot emerald"></div><h3>Main Process</h3></div>
+      <ul>
+        <li>• Electron main.ts — window, lifecycle, logging</li>
+        <li>• IPC handlers: download, history, app, system</li>
+        <li>• Parser dispatch: Douyin → Kuaishou → yt-dlp</li>
+        <li>• Direct fetch (CDN) or spawn yt-dlp subprocess</li>
+        <li>• Pause = kill process, resume = re-spawn from .part</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot cyan"></div><h3>Renderer Process</h3></div>
+      <ul>
+        <li>• Vue 3 + Tailwind + Pinia, no router</li>
+        <li>• v-show tab switching: Download / History / About</li>
+        <li>• Settings as floating panel, not a route</li>
+        <li>• State: localStorage settings (not Pinia)</li>
+        <li>• Progress via IPC broadcast, throttled 200ms</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot amber"></div><h3>Download Flow</h3></div>
+      <ul>
+        <li>• Parse URL → extract formats / direct CDN URL</li>
+        <li>• Douyin/Kuaishou: API first, Puppeteer fallback</li>
+        <li>• Direct URL → fetch + write stream</li>
+        <li>• Otherwise → spawn yt-dlp with format selector</li>
+        <li>• Audio: -x mp3 · Subs: --write-subs · Merge: ffmpeg</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer">DownVid Architecture · Generated from source analysis</p>
+</div>
+
+<script>
+async function copyAsImage(btn){var o=btn.textContent;try{var e=document.getElementById('report-container'),r=e.getBoundingClientRect(),p=32,c=await html2canvas(document.body,{backgroundColor:'#020617',scale:2,useCORS:true,ignoreElements:function(e){return e.classList&&e.classList.contains('toolbar')},x:r.left+window.scrollX-p,y:r.top+window.scrollY-p,width:r.width+p*2,height:r.height+p*2}),b=await new Promise(function(r){c.toBlob(r,'image/png')});await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);btn.textContent='✓ Copied!'}catch(e){btn.textContent='✗ Failed'}setTimeout(function(){btn.textContent=o},2000)}
+async function downloadPNG(btn){var o=btn.textContent;btn.textContent='⏳ ...';try{var e=document.getElementById('report-container'),r=e.getBoundingClientRect(),p=32,c=await html2canvas(document.body,{backgroundColor:'#020617',scale:2,useCORS:true,ignoreElements:function(e){return e.classList&&e.classList.contains('toolbar')},x:r.left+window.scrollX-p,y:r.top+window.scrollY-p,width:r.width+p*2,height:r.height+p*2}),l=document.createElement('a');l.download='downvid-architecture.png';l.href=c.toDataURL('image/png');l.click();btn.textContent='✓ Done!'}catch(e){btn.textContent='✗ Failed'}setTimeout(function(){btn.textContent=o},2000)}
+async function downloadPDF(btn){var o=btn.textContent;btn.textContent='⏳ ...';try{var e=document.getElementById('report-container'),r=e.getBoundingClientRect(),p=32,c=await html2canvas(document.body,{backgroundColor:'#020617',scale:2,useCORS:true,ignoreElements:function(e){return e.classList&&e.classList.contains('toolbar')},x:r.left+window.scrollX-p,y:r.top+window.scrollY-p,width:r.width+p*2,height:r.height+p*2}),d=c.toDataURL('image/png'),js=window.jspdf,or=c.width>c.height?'landscape':'portrait',pdf=new js.jsPDF({orientation:or,unit:'px',format:[c.width,c.height],hotfixes:['px_scaling']});pdf.addImage(d,'PNG',0,0,c.width,c.height);pdf.save('downvid-architecture.pdf');btn.textContent='✓ Done!'}catch(e){btn.textContent='✗ Failed'}setTimeout(function(){btn.textContent=o},2000)}
+</script>
+</body>
+</html>
