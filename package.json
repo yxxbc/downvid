@@ -41,7 +41,7 @@
     "electron-builder": "^24.13.3",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.2.2",
+    "typescript": "^7.0.2",
     "vite": "^5.1.6",
     "vite-plugin-electron": "^1.1.1",
     "vite-plugin-electron-renderer": "^1.0.0",
