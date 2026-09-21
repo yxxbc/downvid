@@ -29,15 +29,15 @@
     "bufferutil": "^4.1.0",
     "electron-updater": "^6.8.3",
     "pinia": "^4.0.3",
-    "puppeteer-core": "^25.10.0",
+    "puppeteer-core": "^25.11.0",
     "utf-8-validate": "^6.0.6",
-    "vue": "^3.5.42"
+    "vue": "^3.5.43"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "@vitejs/plugin-vue": "^6.0.8",
-    "autoprefixer": "^10.5.6",
-    "electron": "44.3.0",
+    "@types/node": "^26.6.1",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "autoprefixer": "^10.6.1",
+    "electron": "44.4.2",
     "electron-builder": "^26.15.3",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
