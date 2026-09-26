@@ -3,12 +3,15 @@ import { autoUpdater } from 'electron-updater'
 import { GITHUB_OWNER, GITHUB_REPO } from '../constants'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fetchAllContributors } from '../utils/contributors'
 
 // 贡献者内存缓存
 let contributorsCache: any[] | null = null
 let contributorsCacheTime = 0
 const MEMORY_CACHE_TTL = 1000 * 60 * 30 // 内存缓存 30 分钟
 const FILE_CACHE_TTL = 1000 * 60 * 60 * 24 * 7 // 文件缓存 7 天
+// 缓存格式版本：v2 起包含匿名作者与 Co-authored-by 共同作者，旧缓存不完整需丢弃
+const FILE_CACHE_VERSION = 2
 
 // 本地缓存文件路径
 function getContributorsCachePath() {
@@ -22,7 +25,7 @@ function readFileCache(): { data: any[]; updatedAt: number } | null {
     if (fs.existsSync(cachePath)) {
       const content = fs.readFileSync(cachePath, 'utf-8')
       const parsed = JSON.parse(content)
-      if (parsed.data && Array.isArray(parsed.data)) {
+      if (parsed.version === FILE_CACHE_VERSION && Array.isArray(parsed.data)) {
         return { data: parsed.data, updatedAt: parsed.updatedAt || 0 }
       }
     }
@@ -34,36 +37,13 @@ function readFileCache(): { data: any[]; updatedAt: number } | null {
 function writeFileCache(data: any[]) {
   try {
     const cachePath = getContributorsCachePath()
-    fs.writeFileSync(cachePath, JSON.stringify({ data, updatedAt: Date.now() }, null, 2), 'utf-8')
+    fs.writeFileSync(cachePath, JSON.stringify({ version: FILE_CACHE_VERSION, data, updatedAt: Date.now() }, null, 2), 'utf-8')
   } catch {}
 }
 
-// 从 GitHub API 获取贡献者
-async function fetchContributorsFromAPI(): Promise<any[]> {
-  const response = await fetch(
-    `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contributors?per_page=100`,
-    {
-      headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'DownVid-App',
-      },
-    }
-  )
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`)
-  }
-
-  const data = await response.json()
-  return data
-    .map((c: any) => ({
-      login: c.login,
-      avatarUrl: c.avatar_url,
-      htmlUrl: c.html_url,
-      contributions: c.contributions,
-      isBot: c.type === 'Bot',
-      isDeveloper: c.login === 'yxxbc',
-    }))
+// 从 GitHub API 获取贡献者（含匿名作者、Bot 与 AI 共同作者）
+function fetchContributorsFromAPI() {
+  return fetchAllContributors(GITHUB_OWNER, GITHUB_REPO)
 }
 
 export function registerAppIpc() {

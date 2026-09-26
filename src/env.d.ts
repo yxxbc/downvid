@@ -22,6 +22,7 @@ interface Window {
           htmlUrl: string
           contributions: number
           isBot: boolean
+          isAI?: boolean
           isDeveloper: boolean
         }>
         error?: string
