@@ -62,6 +62,10 @@
     "icon": "ldstore.ico",
     "artifactName": "${productName}-Setup-${version}.${ext}"
   },
+  // 便携版需单独命名：与安装包同名会互相覆盖，导致 latest.yml 校验失败、自动更新中断
+  "portable": {
+    "artifactName": "${productName}-Portable-${version}.${ext}"
+  },
   "nsis": {
     "oneClick": false,
     "perMachine": false,

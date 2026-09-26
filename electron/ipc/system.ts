@@ -1,5 +1,6 @@
 import { ipcMain, dialog, shell, clipboard, app, session, BrowserWindow } from 'electron'
 import { getDefaultDownloadDir } from '../utils/platform'
+import { setUpdaterProxy } from '../updater'
 import fs from 'node:fs'
 import path from 'node:path'
 import { exec } from 'node:child_process'
@@ -131,12 +132,9 @@ export function registerSystemIpc() {
 
   // 代理设置
   ipcMain.handle('app:setProxy', async (_, proxy: string) => {
-    const ses = session.defaultSession
-    if (proxy) {
-      await ses.setProxy({ proxyRules: proxy })
-    } else {
-      await ses.setProxy({ proxyRules: '' })
-    }
+    await session.defaultSession.setProxy({ proxyRules: proxy || '' })
+    // 更新检查/下载使用独立 session，需同步代理
+    await setUpdaterProxy(proxy)
     return true
   })
 

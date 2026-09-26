@@ -8,7 +8,7 @@ import { registerAppIpc } from './ipc/app'
 import { registerDownloadIpc } from './ipc/download'
 import { registerHistoryIpc } from './ipc/history'
 import { registerSystemIpc } from './ipc/system'
-import { setupAutoUpdater } from './updater'
+import { setupAutoUpdater, stripOwnQuarantine } from './updater'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -177,6 +177,8 @@ app.on('quit', (_e, exitCode) => {
 app.whenReady().then(() => {
   initLog()
   log('[LIFECYCLE] app ready')
+  setupAutoUpdater()
+  stripOwnQuarantine()
   createWindow()
   createMenu()
   log('[LIFECYCLE] Window and menu created')

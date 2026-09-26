@@ -83,10 +83,13 @@ interface Window {
       releaseNotes?: string
       releaseDate?: string
       downloadUrl?: string
+      /** 当前安装方式不支持自动安装，只能前往发布页手动下载 */
+      manual?: boolean
+      manualReason?: string
       error?: string
     }>
     downloadUpdate: () => Promise<{ success: boolean; error?: string }>
-    installUpdate: () => Promise<void>
+    installUpdate: () => Promise<{ success: boolean; error?: string }>
     onUpdateStatus: (callback: (data: {
       status: 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
       version?: string
