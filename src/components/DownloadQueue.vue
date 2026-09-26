@@ -134,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
 import { useDownloadStore } from '../stores/download'
 import type { DownloadTask } from '../types'
@@ -204,7 +204,7 @@ function resumeTask(task: DownloadTask) {
   store.resumeTask(task)
 }
 
-onMounted(() => {
-  loadDiskSpace()
-})
+// 下载目录在父组件挂载后才异步确定，且可被用户切换；任务完成后可用空间也会变化
+watch(() => store.downloadDir, loadDiskSpace, { immediate: true })
+watch(() => store.downloadTasks.filter(t => t.status === 'completed').length, loadDiskSpace)
 </script>

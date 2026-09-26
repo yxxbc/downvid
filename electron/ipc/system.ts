@@ -4,6 +4,45 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 
+// 下载目录可能尚未创建：向上找到最近一个存在的目录再查询
+function nearestExistingDir(dir: string): string {
+  let current = path.resolve(dir)
+  while (!fs.existsSync(current)) {
+    const parent = path.dirname(current)
+    if (parent === current) break
+    current = parent
+  }
+  return current
+}
+
+function execText(command: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(command, { timeout: 5000, windowsHide: true }, (err, stdout) => err ? reject(err) : resolve(stdout))
+  })
+}
+
+// 优先使用 Node 内置 statfs（跨平台，Windows 下为 GetDiskFreeSpaceEx）；
+// 旧实现依赖 wmic，而 Windows 11 24H2 起默认已移除 wmic，导致一直显示“未知”
+async function getDiskSpace(dir: string): Promise<{ free: number; total: number; unit: string }> {
+  const target = nearestExistingDir(dir)
+  try {
+    const stats = await fs.promises.statfs(target)
+    const total = Number(stats.blocks) * Number(stats.bsize)
+    if (total > 0) return { free: Number(stats.bavail) * Number(stats.bsize), total, unit: 'bytes' }
+  } catch {}
+
+  if (process.platform === 'win32') {
+    const drive = path.parse(target).root.replace(/\\$/, '').replace(':', '')
+    const out = await execText(`powershell -NoProfile -Command "$d = Get-PSDrive -Name ${drive}; $d.Free; $d.Used"`)
+    const [free, used] = out.trim().split(/\s+/).map(Number)
+    return { free: free || 0, total: (free || 0) + (used || 0), unit: 'bytes' }
+  }
+  // -P：POSIX 输出格式，设备名过长时也不会折行
+  const lines = (await execText(`df -Pk "${target}"`)).trim().split('\n')
+  const parts = lines[lines.length - 1].split(/\s+/)
+  return { free: parseInt(parts[3]) * 1024 || 0, total: parseInt(parts[1]) * 1024 || 0, unit: 'bytes' }
+}
+
 function getLogPath(): string {
   return path.join(app.getPath('userData'), 'downvid.log')
 }
@@ -141,35 +180,8 @@ export function registerSystemIpc() {
 
   // 获取磁盘可用空间
   ipcMain.handle('app:getDiskSpace', async (_, dir?: string) => {
-    const targetDir = dir || getDefaultDownloadDir()
     try {
-      if (process.platform === 'win32') {
-        const drive = path.parse(targetDir).root.replace('\\', '')
-        const output = await new Promise<string>((resolve, reject) => {
-          exec(`wmic logicaldisk where "DeviceID='${drive}'" get FreeSpace,Size /value`, (err, stdout) => {
-            if (err) reject(err)
-            else resolve(stdout)
-          })
-        })
-        const free = parseInt(output.match(/FreeSpace=(\d+)/)?.[1] || '0')
-        const total = parseInt(output.match(/Size=(\d+)/)?.[1] || '0')
-        return { free, total, unit: 'bytes' }
-      } else {
-        const output = await new Promise<string>((resolve, reject) => {
-          exec(`df -k "${targetDir}"`, (err, stdout) => {
-            if (err) reject(err)
-            else resolve(stdout)
-          })
-        })
-        const lines = output.trim().split('\n')
-        if (lines.length >= 2) {
-          const parts = lines[1].split(/\s+/)
-          const total = parseInt(parts[1]) * 1024
-          const free = parseInt(parts[3]) * 1024
-          return { free, total, unit: 'bytes' }
-        }
-        return { free: 0, total: 0, unit: 'bytes' }
-      }
+      return await getDiskSpace(dir || getDefaultDownloadDir())
     } catch {
       return { free: 0, total: 0, unit: 'bytes' }
     }
