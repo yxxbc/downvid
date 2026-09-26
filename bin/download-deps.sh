@@ -8,7 +8,7 @@
 #   yt-dlp  — yt-dlp-nightly-builds（yt-dlp 官方推荐日常使用 nightly，站点修复更及时）
 #   ffmpeg  — Windows/Linux: BtbN FFmpeg-Builds n8.1 稳定分支
 #             macOS arm64:   eugeneware/ffmpeg-static（原生 arm64，避免 Rosetta 转译）
-#             macOS x64:     evermeet.cx
+#             macOS x64:     evermeet.cx（不可用时回退 eugeneware/ffmpeg-static）
 
 set -e
 
@@ -109,10 +109,14 @@ download_ffmpeg() {
     if [ "$arch" = "arm64" ]; then
       fetch "$tmpdir/ffmpeg.gz" "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/ffmpeg-darwin-arm64.gz"
       gunzip -c "$tmpdir/ffmpeg.gz" > "$dir/$file"
-    else
-      fetch "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"
+    elif fetch "$tmpdir/ffmpeg.zip" "https://evermeet.cx/ffmpeg/getrelease/zip"; then
       unzip -q -o "$tmpdir/ffmpeg.zip" -d "$tmpdir"
       cp "$tmpdir/ffmpeg" "$dir/$file"
+    else
+      # evermeet 不可用时回退到 eugeneware/ffmpeg-static 的 x64 构建
+      warn "evermeet.cx 下载失败，改用 eugeneware/ffmpeg-static"
+      fetch "$tmpdir/ffmpeg.gz" "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/ffmpeg-darwin-x64.gz"
+      gunzip -c "$tmpdir/ffmpeg.gz" > "$dir/$file"
     fi
   else
     local target archive
