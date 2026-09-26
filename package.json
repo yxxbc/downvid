@@ -34,14 +34,14 @@
     "vue": "^3.5.42"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.5.1",
     "@vitejs/plugin-vue": "^6.0.8",
-    "autoprefixer": "^10.5.6",
     "electron": "44.3.0",
     "electron-builder": "^26.15.3",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "vite": "^8.3.0",
     "vite-plugin-electron": "^1.1.2",
     "vite-plugin-electron-renderer": "^1.0.0",

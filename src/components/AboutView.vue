@@ -7,7 +7,7 @@
       </div>
 
       <!-- App Info Card -->
-      <div class="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 mb-6 border border-outline-variant/10">
+      <div class="bg-linear-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 mb-6 border border-outline-variant/10">
         <div class="flex items-center gap-4">
           <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
             <img src="@/assets/logo.png" alt="DownVid" class="w-full h-full object-contain" />

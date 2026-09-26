@@ -27,7 +27,7 @@
         :key="task.id"
         class="flex flex-col p-3 rounded-md border transition-all"
         :class="{
-          'bg-surface-container-lowest shadow-sm border-outline-variant/10': task.status === 'downloading' || task.status === 'merging',
+          'bg-surface-container-lowest shadow-xs border-outline-variant/10': task.status === 'downloading' || task.status === 'merging',
           'bg-surface-container-lowest border-outline-variant/10 opacity-70': task.status === 'pending',
           'bg-surface-container-highest/60 border-outline-variant/5': task.status === 'completed',
           'bg-error-container/10 border-error/20': task.status === 'error',
@@ -36,7 +36,7 @@
       >
         <div class="flex gap-3">
           <div
-            class="w-20 h-14 rounded-sm bg-surface-variant bg-cover bg-center flex-shrink-0 relative overflow-hidden"
+            class="w-20 h-14 rounded-sm bg-surface-variant bg-cover bg-center shrink-0 relative overflow-hidden"
             :style="{ backgroundImage: `url(${task.videoInfo.thumbnail})` }"
           >
             <div v-if="task.videoInfo.duration" class="absolute bottom-1 right-1 bg-inverse-surface/80 text-inverse-on-surface text-[8px] font-mono px-0.5 rounded-sm">
@@ -52,7 +52,7 @@
               <h4 class="font-headline text-xs font-bold truncate" :class="task.status === 'pending' ? 'text-on-surface opacity-70' : 'text-on-surface'">
                 {{ task.videoInfo.title }}
               </h4>
-              <button class="text-on-surface-variant hover:text-error transition-colors flex-shrink-0" @click="removeTask(task.id)">
+              <button class="text-on-surface-variant hover:text-error transition-colors shrink-0" @click="removeTask(task.id)">
                 <MaterialIcon name="close" :size="14" />
               </button>
             </div>

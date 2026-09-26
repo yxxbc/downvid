@@ -17,6 +17,8 @@ pnpm build                  # vue-tsc && vite build && electron-builder (current
 pnpm build:mac:arm64        # also :mac:x64 :win :linux:x64 :linux:arm64
 ```
 
+TypeScript is pinned to 5.x: vue-tsc can't run on TypeScript 7 (the Go port drops `typescript/lib/tsc`); Dependabot ignores its major bumps.
+
 No test suite and no ESLint/Prettier installed (CONTRIBUTING.md claims otherwise). CI (`.github/workflows/ci.yml`) runs only `vue-tsc --noEmit` + `vite build` on the 3 OSes. `tsconfig.json` has `strict` + `noUnusedLocals` + `noUnusedParameters`, so an unused import fails the build.
 
 Release: bump `package.json` version → add a `## [x.y.z]` section to `CHANGELOG.md` → push tag `v*`. `release.yml` builds 5 arch targets and greps release notes out of CHANGELOG by that exact header.
@@ -67,7 +69,7 @@ Pause = `child.kill()` (plus `taskkill /T /F` on Windows) and the task is droppe
 - `electron/main.ts` disables GPU via six `commandLine.appendSwitch` calls — a macOS Tahoe + Electron 30 crash workaround. Don't drop them casually.
 - `electron/updater.ts` `setupAutoUpdater()` is dead code, never called. Update checking runs through the `app:checkForUpdates` / `app:downloadUpdate` handlers in `electron/ipc/app.ts` instead, so the `update:status` events those handlers' types promise are never emitted.
 - Main process logs to `userData/downvid.log` (with a 5s heartbeat) and the Settings view reads the last 500 lines via `app:getLog` — that's the fastest way to diagnose a packaged-app crash.
-- Tailwind uses Material-3-style semantic color tokens defined in `tailwind.config.js` (`bg-surface`, `text-on-surface-variant`, `surface-container-high`, …). Use those, not raw hex. `darkMode: 'class'` is configured but nothing ever toggles the class.
+- Tailwind v4, CSS-first: no `tailwind.config.js`; Material-3-style semantic color tokens live in the `@theme` block of `src/style.css` (`bg-surface`, `text-on-surface-variant`, `surface-container-high`, …). Use those, not raw hex. The `@layer base` compat block there keeps v3 defaults (gray-200 borders, pointer cursor on buttons). `@custom-variant dark` is declared but nothing ever toggles the class.
 - Repo owner/name for the GitHub API and updater is hardcoded in `electron/constants.ts` and `electron-builder.json5`.
 
 ## Conventions

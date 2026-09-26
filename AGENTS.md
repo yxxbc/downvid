@@ -15,6 +15,8 @@ pnpm vue-tsc --noEmit       # 类型检查（唯一 lint，CI 也跑这个）
 pnpm build                  # vue-tsc + vite build + electron-builder（当前平台）
 ```
 
+TypeScript 固定在 5.x：vue-tsc 无法在 TypeScript 7（Go 重写版，去掉了 `typescript/lib/tsc`）上运行，Dependabot 已忽略其大版本升级。
+
 没有 ESLint、Prettier、测试套件。（CONTRIBUTING.md 声称有 ESLint/Prettier，实际未安装。）`tsconfig.json` 开启了 `strict` + `noUnusedLocals` + `noUnusedParameters`，未使用的 import 会导致构建失败。
 
 ## 项目结构
@@ -85,6 +87,6 @@ Release notes 从 CHANGELOG.md 按版本 header 提取。
 - 分支命名：`feat/…` `fix/…` `docs/…` `chore/…`，Conventional Commits
 - `localStorage['settings']` 存用户设置，改形状需全局搜索
 - yt-dlp 的 JS 运行时用 Electron 自身（`process.execPath`），不需要单独安装 Node
-- Tailwind 使用 Material-3 风格语义色 token（`bg-surface`、`text-on-surface-variant`、`surface-container-high` 等），定义在 `tailwind.config.js`，用这些而非 raw hex。`darkMode: 'class'` 已配置但从未切换 class。
+- Tailwind v4（CSS-first，无 `tailwind.config.js`）：Material-3 风格语义色 token（`bg-surface`、`text-on-surface-variant`、`surface-container-high` 等）定义在 `src/style.css` 的 `@theme` 中，用这些而非 raw hex。同文件 `@layer base` 兼容块保留了 v3 默认值（gray-200 边框、按钮 pointer 光标）。`@custom-variant dark` 已声明但从未切换 class。
 - 主进程日志写到 `userData/downvid.log`（含 5s 心跳），Settings 视图通过 `app:getLog` 读最后 500 行——这是诊断打包应用崩溃的最快方式
 - GitHub API 和 updater 的 owner/name 硬编码在 `electron/constants.ts` 和 `electron-builder.json5` 中

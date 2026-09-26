@@ -3,7 +3,7 @@
     <Transition name="panel">
       <div v-if="visible" class="fixed inset-0 z-40 flex justify-end" @click.self="close">
         <!-- Overlay -->
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="close" />
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-xs" @click="close" />
         
         <!-- Panel -->
         <div class="relative w-full max-w-xl bg-surface-container-lowest shadow-2xl flex flex-col border-l border-outline-variant/20">
@@ -18,7 +18,7 @@
           <!-- Body: Sidebar + Content -->
           <div class="flex-1 flex overflow-hidden">
             <!-- Sidebar -->
-            <div class="w-40 flex-shrink-0 bg-surface-container/50 border-r border-outline-variant/10 py-3 flex flex-col gap-1">
+            <div class="w-40 shrink-0 bg-surface-container/50 border-r border-outline-variant/10 py-3 flex flex-col gap-1">
               <button
                 v-for="section in sections"
                 :key="section.key"
@@ -42,7 +42,7 @@
                       v-model="settings.downloadDir"
                       type="text"
                       readonly
-                      class="flex-1 px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-none focus:border-primary/40"
+                      class="flex-1 px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-hidden focus:border-primary/40"
                     />
                     <button 
                       class="px-4 py-2 bg-surface-container-highest text-on-surface rounded-md text-sm font-medium hover:bg-surface-variant transition-colors border border-outline-variant/20"
@@ -58,7 +58,7 @@
                   <input 
                     v-model="settings.filenameTemplate"
                     type="text"
-                    class="px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-none focus:border-primary/40 font-mono"
+                    class="px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-hidden focus:border-primary/40 font-mono"
                     placeholder="%(title)s.%(ext)s"
                   />
                   <p class="text-[11px] text-on-surface-variant">%(title)s 标题 · %(id)s ID · %(uploader)s 上传者</p>
@@ -121,7 +121,7 @@
                       type="text"
                       readonly
                       placeholder="选择 cookies.txt"
-                      class="flex-1 px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-none focus:border-primary/40"
+                      class="flex-1 px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-hidden focus:border-primary/40"
                     />
                     <button class="px-3 py-2 bg-surface-container-highest text-on-surface rounded-md text-sm font-medium hover:bg-surface-variant transition-colors border border-outline-variant/20" @click="selectCookiesFile">
                       选择
@@ -143,7 +143,7 @@
                     <input 
                       v-model="settings.proxy"
                       type="text"
-                      class="flex-1 px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-none focus:border-primary/40 font-mono"
+                      class="flex-1 px-3 py-2 bg-surface-container-highest border border-outline-variant/20 rounded-md text-sm text-on-surface focus:outline-hidden focus:border-primary/40 font-mono"
                       placeholder="http://127.0.0.1:7890"
                     />
                     <button

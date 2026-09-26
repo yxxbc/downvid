@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### 变更
+- 前端样式迁移至 Tailwind CSS v4（CSS-first 配置，主题 token 移入 `src/style.css` 的 `@theme`），界面保持不变
+
+### 修复
+- 修复依赖升级后构建失败：TypeScript 回退至 5.x（vue-tsc 不支持 TypeScript 7），PostCSS 改用 `@tailwindcss/postcss`
+- 设置面板左侧导航选中项背景色（`bg-primary/8`）此前在 Tailwind v3 下未生效，现正常显示
+
 ---
 
 ## [1.1.0] - 2026-08-24

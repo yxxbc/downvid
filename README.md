@@ -226,7 +226,7 @@ pnpm build:linux    # Linux
 | [![Electron](https://img.shields.io/badge/Electron-30-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/) | 跨平台桌面应用框架 |
 | [![Vue 3](https://img.shields.io/badge/Vue-3.4-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/) | 渐进式 JavaScript 框架 |
 | [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) | 类型安全的 JavaScript 超集 |
-| [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/) | 实用优先的 CSS 框架 |
+| [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/) | 实用优先的 CSS 框架 |
 | [![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/) | 下一代前端构建工具 |
 | [![Pinia](https://img.shields.io/badge/Pinia-4-FFD859?style=flat-square&logo=pinia&logoColor=white)](https://pinia.vuejs.org/) | Vue 状态管理 |
 | [![yt-dlp](https://img.shields.io/badge/yt--dlp-latest-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp) | 强大的视频下载引擎 |
@@ -267,7 +267,7 @@ videdown/
 ├── .github/                # GitHub Actions CI/CD
 ├── electron-builder.json5  # electron-builder 配置
 ├── vite.config.ts         # Vite 配置
-├── tailwind.config.js     # Tailwind 配置
+├── postcss.config.js      # PostCSS 配置（Tailwind 主题在 src/style.css 的 @theme 中）
 ├── tsconfig.json          # TypeScript 配置
 ├── package.json           # 项目依赖与脚本
 ├── CHANGELOG.md           # 更新日志

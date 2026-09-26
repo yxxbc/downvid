@@ -1,10 +1,10 @@
 <template>
   <div class="flex gap-4 p-3 bg-surface-container-low rounded-md border border-outline-variant/10">
     <div
-      class="w-40 h-24 rounded-sm bg-surface-variant bg-cover bg-center flex-shrink-0 relative overflow-hidden shadow-sm"
+      class="w-40 h-24 rounded-sm bg-surface-variant bg-cover bg-center shrink-0 relative overflow-hidden shadow-xs"
       :style="{ backgroundImage: `url(${videoInfo.thumbnail})` }"
     >
-      <div v-if="videoInfo.duration" class="absolute bottom-1 right-1 bg-inverse-surface/80 backdrop-blur-sm text-inverse-on-surface text-[10px] font-mono px-1 rounded-sm">
+      <div v-if="videoInfo.duration" class="absolute bottom-1 right-1 bg-inverse-surface/80 backdrop-blur-xs text-inverse-on-surface text-[10px] font-mono px-1 rounded-sm">
         {{ formatDuration(videoInfo.duration) }}
       </div>
     </div>
