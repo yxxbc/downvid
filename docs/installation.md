@@ -76,6 +76,8 @@ macOS 默认只允许运行 App Store 中的应用。首次打开 DownVid 时你
 xattr -cr /Applications/DownVid.app
 ```
 
+> 从 v1.2.0 起，DownVid 首次成功打开后会自动移除自身的隔离属性，应用内更新下载的新版本也会自动去除隔离属性并重新签名，只需在首次安装时处理一次。
+
 ### macOS 权限说明
 
 DownVid **不需要**任何特殊权限：
