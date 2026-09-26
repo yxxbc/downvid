@@ -42,7 +42,7 @@
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vite": "^5.1.6",
+    "vite": "^8.3.0",
     "vite-plugin-electron": "^1.1.2",
     "vite-plugin-electron-renderer": "^1.0.0",
     "vue-tsc": "^3.3.11"
