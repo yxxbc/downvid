@@ -5,3 +5,5 @@ allowBuilds:
   electron: true
   esbuild: true
   utf-8-validate: true
+  # 仅 Squirrel.Windows 目标需要，本项目使用 NSIS；显式拒绝以免 pnpm 11 因未审批的构建脚本报错
+  electron-winstaller: false
