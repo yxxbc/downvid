@@ -24,3 +24,7 @@ export function ensureDownloadDir(dir: string): string {
   }
   return dir
 }
+
+export function isTwitterUrl(url: string): boolean {
+  return /^https?:\/\/(?:[\w-]+\.)?(?:x|twitter)\.com\//i.test(url)
+}

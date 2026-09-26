@@ -58,11 +58,13 @@ interface Window {
         taskId: string
         directUrl?: string 
         cookiesFile?: string
-        downloadMode?: 'video' | 'audio'
         audioTrack?: any
         subtitles?: string[]
         proxy?: string
         cacheFile?: string
+        hasAudio?: boolean
+        filenameTemplate?: string
+        downloadMode?: 'video' | 'audio' | 'subtitle'
       }) => Promise<any>
       pauseDownload: (taskId: string) => Promise<boolean>
     }

@@ -171,6 +171,9 @@ export const useDownloadStore = defineStore('download', () => {
         cookiesFile,
         filenameTemplate,
         proxy,
+        hasAudio: task.selectedFormat.hasAudio,
+        // 解析时保存的 info JSON，下载时跳过 yt-dlp 二次提取
+        cacheFile: task.videoInfo.cacheFile,
       }
 
       if ((task as any).downloadMode === 'audio') downloadOptions.downloadMode = 'audio'
