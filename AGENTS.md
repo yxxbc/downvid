@@ -78,7 +78,7 @@ Linux x64 有独立格式脚本可并行：`build:linux:x64:appimage`、`:deb`�
 
 1. `package.json` 升版本
 2. `CHANGELOG.md` 加 `## [x.y.z]` 段落
-3. 推 tag `v*` → `release.yml` 自动构建 5 个架构目标并发布（每个 job 只拉取本平台 LFS；`scripts/gen-update-manifests.mjs` 按最终产物重新生成全部 `latest*.yml`）
+3. 推 tag `v*`（或在 Actions 页面手动运行 `release.yml` 并填写与 `package.json` 一致的版本号，由工作流创建 tag）→ `release.yml` 自动构建 5 个架构目标并发布（每个 job 只拉取本平台 LFS；`scripts/gen-update-manifests.mjs` 按最终产物重新生成全部 `latest*.yml`）
 
 产物文件名是旧版本客户端更新清单所引用的，不要改 `DownVid-Setup-*`、`DownVid-<arch>-Mac-*`、`DownVid-x86_64-Linux-*` 等命名。
 
