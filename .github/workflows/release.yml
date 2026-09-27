@@ -4,13 +4,43 @@ on:
   push:
     tags:
       - 'v*'
+  # 也可在 Actions 页面手动发布：填写版本号（须与 package.json 一致），由工作流创建 v<版本号> tag
   workflow_dispatch:
+    inputs:
+      version:
+        description: '发布版本号（如 1.2.0，留空则只构建不发布）'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: false
+      - id: v
+        name: Resolve version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          PKG=$(node -p "require('./package.json').version")
+          if [ -n "$VERSION" ] && [ "$VERSION" != "$PKG" ]; then
+            echo "::error::发布版本 $VERSION 与 package.json 版本 $PKG 不一致"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
   build-mac-arm64:
+    needs: version
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,6 +83,7 @@ jobs:
           retention-days: 7
 
   build-mac-x64:
+    needs: version
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -95,6 +126,7 @@ jobs:
           retention-days: 7
 
   build-win:
+    needs: version
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -138,6 +170,7 @@ jobs:
           retention-days: 7
 
   build-linux-x64:
+    needs: version
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -184,6 +217,7 @@ jobs:
           retention-days: 7
 
   build-linux-arm64:
+    needs: version
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
@@ -226,9 +260,11 @@ jobs:
           retention-days: 7
 
   release:
-    needs: [build-mac-arm64, build-mac-x64, build-win, build-linux-x64, build-linux-arm64]
+    needs: [version, build-mac-arm64, build-mac-x64, build-win, build-linux-x64, build-linux-arm64]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: needs.version.outputs.version != ''
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
@@ -245,13 +281,12 @@ jobs:
 
       # 各 job 生成的 latest*.yml 汇总时会互相覆盖，按最终上传的文件重新生成
       - name: Generate update manifests
-        run: node scripts/gen-update-manifests.mjs artifacts "${GITHUB_REF_NAME#v}"
+        run: node scripts/gen-update-manifests.mjs artifacts "$VERSION"
 
       - name: Extract release notes from CHANGELOG
         id: changelog
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
+          TAG="v${VERSION}"
           
           NOTES=$(awk "/^## \\[${VERSION}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md)
           
@@ -270,6 +305,10 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
+          # 手动发布时 tag 尚不存在，由 action 在当前提交上创建
+          tag_name: v${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
           body: ${{ steps.changelog.outputs.notes }}
