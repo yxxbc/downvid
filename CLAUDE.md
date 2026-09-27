@@ -59,7 +59,8 @@ Pause = `child.kill()` (plus `taskkill /T /F` on Windows) and the task is droppe
 
 - `utils/binary.ts` resolves `yt-dlp`/`ffmpeg` by trying an ordered list of paths; packaged apps hit `process.resourcesPath/bin`. Binaries live in `bin/<platform>/<arch>/` and are **tracked in Git LFS** (`.gitattributes`). `release.yml` flattens the right arch into `bin/` and deletes the other platform dirs before electron-builder packs `bin` as `extraResources`.
 - YouTube needs a JS runtime for yt-dlp; `checkJsRuntime()` returns `process.execPath` (the Electron binary) as `--js-runtimes node:<path>`, so no separate Node install is needed in a packaged app.
-- Cookies go through `utils/cookies.ts` `runWithCookies`: manual file → none, or (auto) each installed browser → exported snapshot `userData/cookies/browser-cookies.txt` → none. It only moves to the next source on a cookie *load* error (`isCookieError`), never on auth errors. Downloads prefer a fresh (<30 min) snapshot so they match the parse.
+- Cookies go through `utils/cookies.ts` `runWithCookies`: manual file → none, or (auto) each installed browser → exported snapshot `userData/ytdlp-cookies/browser-cookies.txt` → none. It only moves to the next source on a cookie *load* error (`isCookieError`), never on auth errors, and an exception while preparing a source only skips that source. Downloads prefer a fresh (<30 min) snapshot so they match the parse. When a browser's cookies couldn't be read, errors get a `cookieFailureHint` appended after the `\n\n提示：` marker, which the renderer splits off into the error modal's `hint`.
+- Never create anything in `userData` whose name case-insensitively matches a Chromium file (`Cookies`, `Network`, `Preferences`, `Local Storage`…): macOS/Windows filesystems are case-insensitive (issue #31 — `userData/cookies` hit `EEXIST`).
 
 ### State
 

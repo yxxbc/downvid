@@ -1,5 +1,6 @@
 import { app } from 'electron'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { getInstalledBrowsers } from './browser'
 
@@ -26,26 +27,62 @@ const BROWSER_FAILURE_TTL_MS = 10 * 60 * 1000
 let lastGoodBrowser = ''
 const browserFailures = new Map<string, number>()
 
-function cookieDir(): string {
-  const dir = path.join(app.getPath('userData'), 'cookies')
-  fs.mkdirSync(dir, { recursive: true })
-  return dir
+// 不能命名为 cookies：macOS/Windows 文件系统不区分大小写，会与 Chromium 在 userData 下的
+// Cookies 数据库文件冲突（mkdir 报 EEXIST，issue #31）
+const COOKIE_DIR_NAME = 'ytdlp-cookies'
+let legacyMigrated = false
+
+// v1.2.0 在区分大小写的 Linux 上会创建 userData/cookies 目录，迁移其中的快照后删除。
+// 只处理目录：在 macOS/Windows 上该路径指向 Chromium 的 Cookies 文件，绝不能动
+function migrateLegacyDir(target: string) {
+  if (legacyMigrated) return
+  legacyMigrated = true
+  const legacy = path.join(app.getPath('userData'), 'cookies')
+  try {
+    if (!fs.statSync(legacy).isDirectory()) return
+    const oldSnapshot = path.join(legacy, 'browser-cookies.txt')
+    const newSnapshot = path.join(target, 'browser-cookies.txt')
+    if (fs.existsSync(oldSnapshot) && !fs.existsSync(newSnapshot)) fs.renameSync(oldSnapshot, newSnapshot)
+    fs.rmSync(legacy, { recursive: true, force: true })
+  } catch {}
 }
 
-function snapshotPath(): string {
-  return path.join(cookieDir(), 'browser-cookies.txt')
+/** cookie 工作目录；userData 下不可用时退回系统临时目录，都不可用返回 null（不导出快照） */
+function cookieDir(): string | null {
+  const candidates = [
+    path.join(app.getPath('userData'), COOKIE_DIR_NAME),
+    path.join(os.tmpdir(), `downvid-${COOKIE_DIR_NAME}`),
+  ]
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true })
+      if (!fs.statSync(dir).isDirectory()) continue
+      migrateLegacyDir(dir)
+      return dir
+    } catch {}
+  }
+  return null
 }
 
-function tempPath(tag: string): string {
-  return path.join(cookieDir(), `tmp-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.txt`)
+function snapshotPath(): string | null {
+  const dir = cookieDir()
+  return dir && path.join(dir, 'browser-cookies.txt')
 }
 
-function removeQuietly(file: string) {
+function tempPath(tag: string): string | null {
+  const dir = cookieDir()
+  return dir && path.join(dir, `tmp-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.txt`)
+}
+
+function removeQuietly(file: string | null) {
+  if (!file) return
   try { fs.rmSync(file, { force: true }) } catch {}
 }
 
 function snapshotAge(): number | null {
-  try { return Date.now() - fs.statSync(snapshotPath()).mtimeMs } catch { return null }
+  const snapshot = snapshotPath()
+  if (!snapshot) return null
+  try { return Date.now() - fs.statSync(snapshot).mtimeMs } catch { return null }
 }
 
 // yt-dlp 退出时会把 cookie 写回 --cookies 指定的文件，并发任务共用同一文件会互相覆盖，
@@ -55,7 +92,9 @@ function snapshotAttempt(label: string): CookieAttempt {
   return {
     label,
     prepare: () => {
-      try { fs.copyFileSync(snapshotPath(), copy); return ['--cookies', copy] } catch { return [] }
+      const snapshot = snapshotPath()
+      if (!snapshot || !copy) return []
+      try { fs.copyFileSync(snapshot, copy); return ['--cookies', copy] } catch { return [] }
     },
     onSuccess: () => {},
     onCookieFailure: () => {},
@@ -66,17 +105,22 @@ function snapshotAttempt(label: string): CookieAttempt {
 function browserAttempt(browser: string): CookieAttempt {
   // 与 --cookies-from-browser 同时指定一个尚不存在的 --cookies 文件，yt-dlp 退出时会把读到的
   // 浏览器 cookie 写入该文件，成功后原子替换为快照
+  // 工作目录不可用时只读取浏览器 cookie，不导出快照
   const exported = tempPath(browser)
   return {
     label: browser,
-    prepare: () => ['--cookies-from-browser', browser, '--cookies', exported],
+    prepare: () => exported
+      ? ['--cookies-from-browser', browser, '--cookies', exported]
+      : ['--cookies-from-browser', browser],
     onSuccess: () => {
       lastGoodBrowser = browser
       browserFailures.delete(browser)
+      const snapshot = snapshotPath()
+      if (!exported || !snapshot) return
       try {
         if (fs.statSync(exported).size > 0) {
-          fs.renameSync(exported, snapshotPath())
-          if (process.platform !== 'win32') fs.chmodSync(snapshotPath(), 0o600)
+          fs.renameSync(exported, snapshot)
+          if (process.platform !== 'win32') fs.chmodSync(snapshot, 0o600)
         }
       } catch {}
     },
@@ -140,24 +184,66 @@ export function isCookieError(stderr: string): boolean {
     && COOKIE_ERROR_PATTERNS.some(p => p.test(line)))
 }
 
+const BROWSER_NAMES: Record<string, string> = {
+  chrome: 'Chrome', edge: 'Edge', firefox: 'Firefox', safari: 'Safari', brave: 'Brave', chromium: 'Chromium',
+}
+
+/** 错误信息与提示之间的分隔标记，渲染进程据此拆分，避免提示文字干扰错误分类 */
+export const COOKIE_HINT_MARKER = '\n\n提示：'
+
+/**
+ * 浏览器 Cookie 读取失败时给用户的解决建议（issue #9）。
+ * Windows 上 Chrome/Edge 运行时数据库被锁定，且 Chrome 127 起启用 App-Bound 加密，基本无法读取
+ */
+export function cookieFailureHint(failedBrowsers: string[]): string {
+  if (failedBrowsers.length === 0) return ''
+  const names = failedBrowsers.map(b => BROWSER_NAMES[b] || b).join('、')
+  const chromiumOnWindows = process.platform === 'win32'
+    && failedBrowsers.some(b => ['chrome', 'edge', 'brave', 'chromium'].includes(b))
+  return `${COOKIE_HINT_MARKER}未能读取 ${names} 的 Cookie，本次未携带登录信息。`
+    + (chromiumOnWindows ? 'Windows 上 Chrome/Edge 运行时 Cookie 数据库被锁定且加密，无法读取。' : '')
+    + '若视频需要登录才能访问：① 完全退出该浏览器后重试；'
+    + (failedBrowsers.includes('firefox') ? '② 或改用其他浏览器登录该网站；' : '② 或使用 Firefox 登录该网站（其 Cookie 可随时读取）；')
+    + '③ 或在“设置 → Cookies”中手动导入 cookies.txt。'
+}
+
 /**
  * 按 cookie 策略依次执行 yt-dlp，只有 cookie 读取失败才换下一个来源；
- * 其他错误（包括暂停导致的中断）直接返回，交给调用方处理
+ * 其他错误（包括暂停导致的中断）直接返回，交给调用方处理。
+ * 返回值附带本次 cookie 读取失败的浏览器，供生成错误提示
  */
 export async function runWithCookies<R extends { code: number | null; stderr: string }>(
   attempts: CookieAttempt[],
   run: (cookieArgs: string[], attempt: CookieAttempt) => Promise<R>,
-): Promise<R> {
+): Promise<R & { failedBrowsers: string[] }> {
+  const failedBrowsers: string[] = []
+  // 近期读取失败而被本次跳过的浏览器同样没有携带 Cookie，一并计入提示
+  const finish = (r: R) => {
+    const now = Date.now()
+    for (const [browser, time] of browserFailures) {
+      if (now - time <= BROWSER_FAILURE_TTL_MS && !failedBrowsers.includes(browser)) failedBrowsers.push(browser)
+    }
+    return Object.assign(r, { failedBrowsers })
+  }
   let result: R | undefined
   for (const attempt of attempts) {
+    // cookie 准备阶段的任何异常只跳过该来源，绝不能让整个解析/下载失败
+    let cookieArgs: string[]
     try {
-      result = await run(attempt.prepare(), attempt)
-      if (result.code === 0) { attempt.onSuccess(); return result }
-      if (!isCookieError(result.stderr)) return result
+      cookieArgs = attempt.prepare()
+    } catch {
+      attempt.cleanup()
+      continue
+    }
+    try {
+      result = await run(cookieArgs, attempt)
+      if (result.code === 0) { attempt.onSuccess(); return finish(result) }
+      if (!isCookieError(result.stderr)) return finish(result)
       attempt.onCookieFailure()
+      if (BROWSER_NAMES[attempt.label]) failedBrowsers.push(attempt.label)
     } finally {
       attempt.cleanup()
     }
   }
-  return result!
+  return finish(result ?? await run([], attempts[attempts.length - 1]))
 }

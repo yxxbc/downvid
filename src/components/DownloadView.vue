@@ -168,7 +168,8 @@ async function parseVideo() {
     store.parseProgress = 100
   } catch (e: any) {
     clearInterval(progressInterval)
-    const rawError = e.message || '未知错误'
+    // 主进程可能在错误后附带 Cookie 读取失败的解决建议，分类时只看错误本身
+    const [rawError, hint = ''] = (e.message || '未知错误').split('\n\n提示：')
     let errorMsg = rawError
     if (errorMsg.includes('not a valid URL') || errorMsg.includes('Unsupported URL')) errorMsg = '请输入有效的链接'
     else if (errorMsg.includes('not found') || errorMsg.includes('404')) errorMsg = '视频不存在或已被删除'
@@ -178,7 +179,7 @@ async function parseVideo() {
     else if (errorMsg.toLowerCase().includes('yt-dlp') && errorMsg.includes('not found')) errorMsg = 'yt-dlp 未找到'
     else if (errorMsg.includes('No video formats found')) errorMsg = '未找到可下载的视频格式，可能需要 Cookie 或视频已失效'
     else if (!errorMsg || errorMsg === '解析失败') errorMsg = '无法解析该链接'
-    showError('解析失败：' + errorMsg, rawError)
+    showError('解析失败：' + errorMsg, rawError, hint)
   } finally {
     store.isParsing = false
   }

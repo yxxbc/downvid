@@ -57,7 +57,8 @@ TypeScript 固定在 5.x：vue-tsc 无法在 TypeScript 7（Go 重写版，去�
 
 - `electron/utils/binary.ts` 按顺序尝试多个路径解析 `yt-dlp`/`ffmpeg`；打包应用命中 `process.resourcesPath/bin`。二进制在 `bin/<platform>/<arch>/`，Git LFS 追踪。`release.yml` 将对应架构扁平化到 `bin/` 并删除其他平台目录，然后 electron-builder 将 `bin` 作为 `extraResources` 打包。
 - YouTube 需要 JS 运行时；`checkJsRuntime()` 返回 `process.execPath`（Electron 二进制）作为 `--js-runtimes node:<path>`，打包应用无需单独安装 Node。
-- Cookie 经 `utils/cookies.ts` 的 `runWithCookies`：手动文件 → 无；自动模式依次尝试各已安装浏览器 → 快照 `userData/cookies/browser-cookies.txt` → 无。仅在 cookie *读取*错误（`isCookieError`）时切换来源，鉴权错误不切换。下载优先使用 30 分钟内的快照，与解析保持一致。
+- Cookie 经 `utils/cookies.ts` 的 `runWithCookies`：手动文件 → 无；自动模式依次尝试各已安装浏览器 → 快照 `userData/ytdlp-cookies/browser-cookies.txt` → 无。仅在 cookie *读取*错误（`isCookieError`）时切换来源，鉴权错误不切换；准备某个来源时出现异常只跳过该来源。下载优先使用 30 分钟内的快照，与解析保持一致。浏览器 Cookie 读取失败时，错误信息在 `\n\n提示：` 标记后附带 `cookieFailureHint`，渲染进程拆分后显示在错误弹窗的 hint 中。
+- 不要在 `userData` 下创建与 Chromium 文件名（`Cookies`、`Network`、`Preferences`、`Local Storage` 等）大小写不敏感重名的文件/目录：macOS/Windows 文件系统不区分大小写（issue #31，`userData/cookies` 报 `EEXIST`）。
 
 ## 状态管理
 

@@ -32,6 +32,12 @@
           <div class="px-6 py-4">
             <p class="text-sm text-on-surface leading-relaxed">{{ message }}</p>
 
+            <!-- Hint -->
+            <div v-if="hint" class="mt-3 flex gap-2 p-3 rounded-lg bg-primary/5 border border-primary/15">
+              <span class="material-symbols-outlined text-lg text-primary shrink-0">lightbulb</span>
+              <p class="text-xs text-on-surface-variant leading-relaxed">{{ hint }}</p>
+            </div>
+
             <!-- Error detail (collapsible) -->
             <div v-if="detail" class="mt-3">
               <button
@@ -102,6 +108,7 @@ const props = defineProps<{
   title?: string
   message: string
   detail?: string
+  hint?: string
 }>()
 
 const emit = defineEmits<{

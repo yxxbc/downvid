@@ -6,6 +6,14 @@
 
 ---
 
+## [1.2.1] - 2026-09-27
+
+### 修复
+- macOS 上解析全部失败，报 `EEXIST: file already exists, mkdir '.../downvid/cookies'`（#31）：macOS/Windows 文件系统不区分大小写，Cookie 快照目录 `cookies` 与 Electron 自身的 `Cookies` 数据库文件冲突。目录改名为 `ytdlp-cookies`；目录不可用时退回系统临时目录，仍不可用则不导出快照；Cookie 准备阶段的任何异常只跳过该来源，不再导致解析失败
+- 浏览器 Cookie 读取失败（如 Windows 上 Chrome 运行中报 `Could not copy Chrome cookie database`，#9）时，解析不再整体失败而是继续尝试其他来源；若视频最终仍需要登录，错误弹窗会给出具体解决办法（退出浏览器重试、改用 Firefox 登录、手动导入 cookies.txt）
+
+---
+
 ## [1.2.0] - 2026-09-26
 
 ### 新增
