@@ -46,6 +46,7 @@ export interface VideoInfo {
   subtitles?: SubtitleInfo[]
   audioFormats?: AudioFormat[]
   isYoutube?: boolean
+  cacheFile?: string
 }
 
 export interface DownloadTask {

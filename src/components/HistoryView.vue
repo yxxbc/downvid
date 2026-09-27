@@ -33,7 +33,7 @@
           >
             <!-- Thumbnail -->
             <div 
-              class="w-32 h-20 rounded-md bg-surface-variant bg-cover bg-center flex-shrink-0 relative overflow-hidden"
+              class="w-32 h-20 rounded-md bg-surface-variant bg-cover bg-center shrink-0 relative overflow-hidden"
               :style="{ backgroundImage: `url(${item.thumbnail})` }"
             >
               <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">

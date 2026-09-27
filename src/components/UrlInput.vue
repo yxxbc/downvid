@@ -6,7 +6,7 @@
         :value="store.url"
         @input="store.url = ($event.target as HTMLTextAreaElement).value"
         aria-label="Paste video URL here"
-        class="w-full h-24 bg-surface-container-highest rounded-md p-3 text-on-surface placeholder:text-outline-variant resize-none font-body text-sm border-2 border-transparent focus:border-primary focus:outline-none transition-all"
+        class="w-full h-24 bg-surface-container-highest rounded-md p-3 text-on-surface placeholder:text-outline-variant resize-none font-body text-sm border-2 border-transparent focus:border-primary focus:outline-hidden transition-all"
         placeholder="在此处粘贴需要解析的视频链接..."
         @contextmenu.prevent="showContextMenu"
       />
@@ -49,7 +49,7 @@
     <!-- YouTube Cookie Hint -->
     <div v-if="store.isYouTubeUrl && !store.hasParsed" class="flex flex-col gap-2 p-4 bg-tertiary-container/30 rounded-lg border border-tertiary/20">
       <div class="flex items-start gap-3">
-        <MaterialIcon name="info" :size="20" class="text-tertiary flex-shrink-0 mt-0.5" />
+        <MaterialIcon name="info" :size="20" class="text-tertiary shrink-0 mt-0.5" />
         <div class="flex-1">
           <p class="text-sm font-medium text-on-surface">YouTube 视频需要 Cookie 才能下载</p>
           <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
@@ -70,7 +70,7 @@
     <!-- Bilibili Cookie Hint -->
     <div v-if="store.showBilibiliCookieHint && !store.hasParsed" class="flex flex-col gap-2 p-4 bg-tertiary-container/30 rounded-lg border border-tertiary/20">
       <div class="flex items-start gap-3">
-        <MaterialIcon name="info" :size="20" class="text-tertiary flex-shrink-0 mt-0.5" />
+        <MaterialIcon name="info" :size="20" class="text-tertiary shrink-0 mt-0.5" />
         <div class="flex-1">
           <p class="text-sm font-medium text-on-surface">B站视频需要 Cookie 才能下载</p>
           <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
@@ -89,7 +89,7 @@
 
     <!-- Supported Platforms -->
     <div class="flex flex-col gap-2 mt-2">
-      <span class="text-[10px] font-bold text-outline uppercase tracking-[0.1em] ml-1">支持解析平台</span>
+      <span class="text-[10px] font-bold text-outline uppercase tracking-widest ml-1">支持解析平台</span>
       <div class="flex items-center gap-4 px-4 py-2.5 bg-surface-container-low rounded-lg border border-outline-variant/10">
         <div v-for="platform in platforms" :key="platform.name" class="flex items-center gap-2 transition-all cursor-default">
           <MaterialIcon :name="platform.icon" :size="18" class="text-primary" :weight="200"/>

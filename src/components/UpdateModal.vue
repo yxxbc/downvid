@@ -4,7 +4,7 @@
     <Transition name="fade">
       <div
         v-if="visible"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4"
         @click.self="close"
       />
     </Transition>
@@ -63,14 +63,22 @@
             <div class="w-14 h-14 rounded-full bg-error/10 flex items-center justify-center mb-3">
               <MaterialIcon name="error_outline" :size="32" class="text-error" />
             </div>
-            <p class="text-base font-semibold text-on-surface mb-1">检查失败</p>
+            <p class="text-base font-semibold text-on-surface mb-1">{{ errorTitle }}</p>
             <p class="text-sm text-on-surface-variant text-center mb-4">{{ errorMsg }}</p>
-            <button
-              class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:bg-primary/90 transition-colors"
-              @click="checkUpdate"
-            >
-              重新检查
-            </button>
+            <div class="flex items-center gap-3">
+              <button
+                class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:bg-primary/90 transition-colors"
+                @click="retry"
+              >
+                重试
+              </button>
+              <button
+                class="px-4 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                @click="openReleasePage"
+              >
+                前往下载页手动更新
+              </button>
+            </div>
           </div>
 
           <!-- Update Available -->
@@ -81,7 +89,7 @@
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-on-surface">DownVid v{{ newVersion }}</p>
                 <p class="text-xs text-on-surface-variant mt-0.5">
-                  建议更新以获得最新功能和安全修复
+                  {{ manual ? manualReason || '当前安装方式不支持自动更新，请前往发布页下载' : '建议更新以获得最新功能和安全修复' }}
                 </p>
               </div>
             </div>
@@ -135,7 +143,7 @@
               新版本 v{{ newVersion }} 已准备就绪
             </p>
             <p class="text-xs text-on-surface-variant/70 text-center">
-              重启应用将自动安装更新
+              点击“重启并安装”完成更新，应用将自动重新打开
             </p>
           </div>
         </div>
@@ -153,6 +161,15 @@
               稍后
             </button>
             <button
+              v-if="manual"
+              class="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md"
+              @click="openReleasePage"
+            >
+              <MaterialIcon name="open_in_new" :size="16" />
+              <span>前往下载页</span>
+            </button>
+            <button
+              v-else
               class="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md"
               @click="downloadUpdate"
             >
@@ -192,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
 
 const props = defineProps<{
@@ -212,6 +229,28 @@ const releaseNotes = ref('')
 const errorMsg = ref('')
 const downloadPercent = ref(0)
 const downloadSpeed = ref('')
+const downloadUrl = ref('https://github.com/yxxbc/downvid/releases')
+// 当前安装方式不支持自动安装（便携版、tar.gz、DMG 内运行等），只能手动下载
+const manual = ref(false)
+const manualReason = ref('')
+const errorPhase = ref<'check' | 'download' | 'install'>('check')
+const errorTitle = computed(() => ({ check: '检查失败', download: '下载失败', install: '安装失败' })[errorPhase.value])
+
+function fail(phase: 'check' | 'download' | 'install', message: string) {
+  status.value = 'error'
+  errorPhase.value = phase
+  errorMsg.value = message
+}
+
+function openReleasePage() {
+  window.electronAPI?.shell?.openExternal?.(downloadUrl.value)
+}
+
+function retry() {
+  if (errorPhase.value === 'check') checkUpdate()
+  else if (errorPhase.value === 'download') downloadUpdate()
+  else installUpdate()
+}
 
 let unsubscribe: (() => void) | null = null
 
@@ -223,20 +262,21 @@ async function checkUpdate() {
   status.value = 'checking'
   try {
     const result = await window.electronAPI?.checkForUpdates?.()
+    if (result?.downloadUrl) downloadUrl.value = result.downloadUrl
     if (result?.error) {
-      status.value = 'error'
-      errorMsg.value = result.error
+      fail('check', result.error)
     } else if (result?.hasUpdate) {
       status.value = 'available'
       newVersion.value = result.version || ''
       releaseNotes.value = result.releaseNotes || ''
+      manual.value = !!result.manual
+      manualReason.value = result.manualReason || ''
     } else {
       status.value = 'latest'
       currentVersion.value = result?.currentVersion || currentVersion.value
     }
   } catch {
-    status.value = 'error'
-    errorMsg.value = '检查更新失败，请检查网络连接'
+    fail('check', '检查更新失败，请检查网络连接')
   }
 }
 
@@ -247,17 +287,23 @@ async function downloadUpdate() {
   try {
     const result = await window.electronAPI?.downloadUpdate?.()
     if (result && !result.success) {
-      status.value = 'error'
-      errorMsg.value = result.error || '下载更新失败'
+      fail('download', result.error || '下载更新失败')
+    } else if (status.value === 'downloading') {
+      // 不依赖 update:status 事件，下载完成即进入可安装状态
+      status.value = 'downloaded'
     }
   } catch {
-    status.value = 'error'
-    errorMsg.value = '下载更新失败'
+    fail('download', '下载更新失败')
   }
 }
 
 async function installUpdate() {
-  await window.electronAPI?.installUpdate?.()
+  try {
+    const result = await window.electronAPI?.installUpdate?.()
+    if (result && !result.success) fail('install', result.error || '安装更新失败')
+  } catch {
+    fail('install', '安装更新失败')
+  }
 }
 
 // 弹窗打开时自动检查更新
@@ -284,6 +330,8 @@ onMounted(async () => {
           status.value = 'available'
           newVersion.value = data.version || ''
           releaseNotes.value = data.releaseNotes || ''
+          manual.value = !!data.manual
+          manualReason.value = data.manualReason || ''
           break
         case 'not-available':
           status.value = 'latest'
@@ -300,8 +348,7 @@ onMounted(async () => {
           status.value = 'downloaded'
           break
         case 'error':
-          status.value = 'error'
-          errorMsg.value = data.message || '更新失败'
+          fail(status.value === 'downloading' ? 'download' : errorPhase.value, data.message || '更新失败')
           break
       }
     })

@@ -15,7 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          lfs: true
+          lfs: false
+      # 只拉取本平台二进制，避免每个 job 都下载全部平台的 LFS 文件（消耗 LFS 流量配额）
+      - name: Pull platform binaries (LFS)
+        shell: bash
+        run: git lfs pull --include="bin/darwin/arm64/*"
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -53,7 +57,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          lfs: true
+          lfs: false
+      # 只拉取本平台二进制，避免每个 job 都下载全部平台的 LFS 文件（消耗 LFS 流量配额）
+      - name: Pull platform binaries (LFS)
+        shell: bash
+        run: git lfs pull --include="bin/darwin/x64/*"
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -91,7 +99,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          lfs: true
+          lfs: false
+      # 只拉取本平台二进制，避免每个 job 都下载全部平台的 LFS 文件（消耗 LFS 流量配额）
+      - name: Pull platform binaries (LFS)
+        shell: bash
+        run: git lfs pull --include="bin/win32/x64/*"
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -120,6 +132,7 @@ jobs:
           name: win-builds
           path: |
             release/**/DownVid-Setup-*.exe
+            release/**/DownVid-Portable-*.exe
             release/**/latest.yml
             release/**/*.blockmap
           retention-days: 7
@@ -132,7 +145,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          lfs: true
+          lfs: false
+      # 只拉取本平台二进制，避免每个 job 都下载全部平台的 LFS 文件（消耗 LFS 流量配额）
+      - name: Pull platform binaries (LFS)
+        shell: bash
+        run: git lfs pull --include="bin/linux/x64/*"
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -158,7 +175,12 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: linux-x64-${{ matrix.target }}
-          path: release/**/*
+          path: |
+            release/**/*.AppImage
+            release/**/*.deb
+            release/**/*.rpm
+            release/**/*-Linux-*.tar.gz
+            release/**/*.blockmap
           retention-days: 7
 
   build-linux-arm64:
@@ -166,7 +188,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          lfs: true
+          lfs: false
+      # 只拉取本平台二进制，避免每个 job 都下载全部平台的 LFS 文件（消耗 LFS 流量配额）
+      - name: Pull platform binaries (LFS)
+        shell: bash
+        run: git lfs pull --include="bin/linux/arm64/*"
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -212,6 +238,15 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # 各 job 生成的 latest*.yml 汇总时会互相覆盖，按最终上传的文件重新生成
+      - name: Generate update manifests
+        run: node scripts/gen-update-manifests.mjs artifacts "${GITHUB_REF_NAME#v}"
+
       - name: Extract release notes from CHANGELOG
         id: changelog
         run: |
@@ -242,9 +277,10 @@ jobs:
             artifacts/**/*.dmg
             artifacts/**/*.zip
             artifacts/**/DownVid-Setup-*.exe
+            artifacts/**/DownVid-Portable-*.exe
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.rpm
             artifacts/**/*.tar.gz
-            artifacts/**/latest*.yml
+            artifacts/latest*.yml
             artifacts/**/*.blockmap

@@ -87,8 +87,12 @@ onMounted(() => {
     })
   }
   // 延迟 3 秒后检查更新，避免影响启动速度
-  setTimeout(() => {
-    window.electronAPI?.checkForUpdates?.()
+  // 以返回值为准弹窗，不依赖 update:status 事件；检查失败时静默，不打扰启动
+  setTimeout(async () => {
+    try {
+      const result = await window.electronAPI?.checkForUpdates?.()
+      if (result?.hasUpdate) showUpdate.value = true
+    } catch {}
   }, 3000)
 })
 

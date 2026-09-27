@@ -18,7 +18,7 @@
         >
           <div class="flex items-center gap-2">
             <div
-              class="size-4 rounded-full border-4 flex-shrink-0"
+              class="size-4 rounded-full border-4 shrink-0"
               :class="selectedFormat?.formatId === format.formatId ? 'border-primary bg-surface' : 'border-outline-variant bg-surface'"
             />
             <span class="text-xs font-semibold" :class="selectedFormat?.formatId === format.formatId ? 'text-on-surface' : 'text-on-surface font-medium'">{{ format.quality }}</span>
@@ -40,7 +40,7 @@
           @click="$emit('selectAudio', format)"
         >
           <div class="flex items-center gap-2">
-            <div class="size-4 rounded-full border-4 flex-shrink-0" :class="selectedAudioFormat?.formatId === format.formatId ? 'border-primary bg-surface' : 'border-outline-variant bg-surface'" />
+            <div class="size-4 rounded-full border-4 shrink-0" :class="selectedAudioFormat?.formatId === format.formatId ? 'border-primary bg-surface' : 'border-outline-variant bg-surface'" />
             <span class="text-xs font-semibold">{{ format.quality }}</span>
           </div>
           <span class="text-[10px] font-mono text-on-surface-variant">{{ format.filesize ? formatFileSize(format.filesize) : '未知大小' }}</span>
@@ -60,7 +60,7 @@
           @click="$emit('selectTrack', track)"
         >
           <div class="flex items-center gap-2">
-            <div class="size-4 rounded-full border-4 flex-shrink-0" :class="selectedAudioTrack?.id === track.id ? 'border-primary bg-surface' : 'border-outline-variant bg-surface'" />
+            <div class="size-4 rounded-full border-4 shrink-0" :class="selectedAudioTrack?.id === track.id ? 'border-primary bg-surface' : 'border-outline-variant bg-surface'" />
             <span class="text-xs font-semibold">{{ track.name }}</span>
           </div>
           <span class="text-[10px] font-mono text-on-surface-variant">{{ track.language }}</span>
@@ -79,7 +79,7 @@
           :class="selectedSubtitles.includes(sub.language) ? 'bg-surface-container-highest/50 border border-primary/30' : 'bg-surface-container-lowest border border-outline-variant/20 hover:border-primary/40'"
           @click="$emit('selectSubtitle', sub.language)"
         >
-          <div class="size-3 rounded-sm border-2 flex-shrink-0" :class="selectedSubtitles.includes(sub.language) ? 'border-primary bg-primary' : 'border-outline-variant bg-surface'" />
+          <div class="size-3 rounded-sm border-2 shrink-0" :class="selectedSubtitles.includes(sub.language) ? 'border-primary bg-primary' : 'border-outline-variant bg-surface'" />
           <span class="text-xs font-semibold">{{ sub.name }}</span>
         </label>
       </div>

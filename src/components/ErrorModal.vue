@@ -6,11 +6,11 @@
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @click.self="close"
       >
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="close" />
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" @click="close" />
         <div class="relative bg-surface-container rounded-xl shadow-2xl border border-outline-variant/20 w-full max-w-lg overflow-hidden">
           <!-- Header -->
           <div class="flex items-center gap-3 px-6 pt-6 pb-2">
-            <div class="flex-shrink-0 size-10 rounded-full flex items-center justify-center"
+            <div class="shrink-0 size-10 rounded-full flex items-center justify-center"
                  :class="type === 'error' ? 'bg-error-container/20' : type === 'warning' ? 'bg-amber-container/20' : 'bg-primary-container/20'">
               <span class="material-symbols-outlined text-xl"
                     :class="type === 'error' ? 'text-error' : type === 'warning' ? 'text-amber' : 'text-primary'">
@@ -21,7 +21,7 @@
               <h3 class="font-headline text-base font-bold text-on-surface">{{ title }}</h3>
             </div>
             <button
-              class="flex-shrink-0 p-1 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors"
+              class="shrink-0 p-1 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors"
               @click="close"
             >
               <span class="material-symbols-outlined text-lg">close</span>

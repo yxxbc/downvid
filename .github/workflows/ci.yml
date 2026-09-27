@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # 类型检查与构建不需要 yt-dlp/ffmpeg 二进制，不拉取 LFS
+      - uses: actions/checkout@v7
+        with:
+          lfs: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm vue-tsc --noEmit
+      - name: Build
+        run: pnpm vite build
+      - name: Update manifest script
+        shell: bash
+        run: |
+          # 用假安装包验证更新清单生成脚本
+          mkdir -p tmp-artifacts
+          for f in DownVid-Setup-0.0.0.exe DownVid-arm64-Mac-0.0.0.zip DownVid-x64-Mac-0.0.0.zip DownVid-x86_64-Linux-0.0.0.AppImage DownVid-amd64-Linux-0.0.0.deb DownVid-arm64-Linux-0.0.0.AppImage; do
+            echo "$f" > "tmp-artifacts/$f"
+          done
+          node scripts/gen-update-manifests.mjs tmp-artifacts 0.0.0
+          grep -q "DownVid-amd64-Linux-0.0.0.deb" tmp-artifacts/latest-linux.yml
+          grep -q "DownVid-x64-Mac-0.0.0.zip" tmp-artifacts/latest-mac.yml

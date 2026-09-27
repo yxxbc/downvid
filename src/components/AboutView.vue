@@ -7,7 +7,7 @@
       </div>
 
       <!-- App Info Card -->
-      <div class="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 mb-6 border border-outline-variant/10">
+      <div class="bg-linear-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 mb-6 border border-outline-variant/10">
         <div class="flex items-center gap-4">
           <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
             <img src="@/assets/logo.png" alt="DownVid" class="w-full h-full object-contain" />
@@ -100,32 +100,39 @@
 
           <!-- Success -->
           <div v-else-if="contributors.length > 0" class="flex flex-col gap-3">
-            <div class="flex flex-wrap gap-3 justify-center">
-              <div
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-x-2 gap-y-4">
+              <button
                 v-for="c in contributors"
-                :key="c.login"
-                class="group relative w-14 h-14 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-primary/40 transition-all cursor-pointer"
+                :key="`${c.login}-${c.htmlUrl}`"
+                class="group flex flex-col items-center gap-1.5 min-w-0 disabled:cursor-default"
                 :title="`${c.login} · ${c.contributions} 次贡献`"
-                @click="openExternal(c.htmlUrl)"
+                :disabled="!c.htmlUrl"
+                @click="c.htmlUrl && openExternal(c.htmlUrl)"
               >
-                <img
-                  :src="c.avatarUrl"
-                  :alt="c.login"
-                  class="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                <!-- Developer / Bot tag -->
-                <div v-if="c.isDeveloper" class="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-primary text-on-primary text-[7px] font-bold rounded-sm leading-none z-10">
-                  DEV
+                <div class="relative">
+                  <div class="size-12 rounded-full overflow-hidden bg-surface-container-highest ring-2 ring-transparent group-enabled:group-hover:ring-primary/40 transition-all flex items-center justify-center">
+                    <img
+                      v-if="c.avatarUrl && !brokenAvatars.has(c.avatarUrl)"
+                      :src="c.avatarUrl"
+                      :alt="c.login"
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                      @error="brokenAvatars.add(c.avatarUrl)"
+                    />
+                    <span v-else class="text-sm font-bold text-on-surface-variant">{{ c.login.slice(0, 1).toUpperCase() }}</span>
+                  </div>
+                  <!-- Developer / Bot / AI tag -->
+                  <span
+                    v-if="c.isDeveloper || c.isBot"
+                    class="absolute -top-1 -right-2 px-1 py-0.5 text-[8px] font-bold rounded-sm leading-none"
+                    :class="c.isDeveloper ? 'bg-primary text-on-primary' : c.isAI ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-highest text-on-surface-variant'"
+                  >
+                    {{ c.isDeveloper ? 'DEV' : c.isAI ? 'AI' : 'BOT' }}
+                  </span>
                 </div>
-                <div v-else-if="c.isBot" class="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-surface-container-highest text-on-surface-variant text-[7px] font-bold rounded-sm leading-none z-10">
-                  BOT
-                </div>
-                <!-- Hover tooltip -->
-                <div class="absolute -bottom-9 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-on-surface text-surface text-[11px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  {{ c.login }}
-                </div>
-              </div>
+                <span class="w-full text-center text-[11px] leading-tight text-on-surface wrap-anywhere">{{ c.login }}</span>
+                <span class="text-[10px] leading-none text-on-surface-variant">{{ c.contributions }} 次</span>
+              </button>
             </div>
             <div v-if="contributorsWarning" class="text-center">
               <span class="text-[11px] text-on-surface-variant/70">{{ contributorsWarning }}</span>
@@ -165,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import MaterialIcon from './icons/MaterialIcon.vue'
 import UpdateModal from './UpdateModal.vue'
 
@@ -175,6 +182,7 @@ interface Contributor {
   htmlUrl: string
   contributions: number
   isBot: boolean
+  isAI?: boolean
   isDeveloper: boolean
 }
 
@@ -182,6 +190,7 @@ const appVersion = ref('1.0.0')
 const showUpdateDrawer = ref(false)
 
 const contributors = ref<Contributor[]>([])
+const brokenAvatars = reactive(new Set<string>())
 const contributorsLoading = ref(false)
 const contributorsError = ref('')
 const contributorsWarning = ref('')
