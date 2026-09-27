@@ -23,6 +23,7 @@
       :title="modalState.title"
       :message="modalState.message"
       :detail="modalState.detail"
+      :hint="modalState.hint"
       @update:visible="modal.close()"
     />
 

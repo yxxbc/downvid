@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { getYtDlpPath, checkJsRuntime } from '../utils/binary'
-import { getCookieAttempts, runWithCookies } from '../utils/cookies'
+import { getCookieAttempts, runWithCookies, cookieFailureHint } from '../utils/cookies'
 import { isTwitterUrl } from '../utils/platform'
 import { LANG_NAMES } from '../constants'
 import { buildVideoFormats } from './formats'
@@ -95,7 +95,7 @@ async function parseViaCli(url: string, cookiesFile: string | undefined, proxy: 
     const fallback = await dumpInfo(url, cookiesFile, proxy, fallbackArgs)
     if (fallback.code === 0) { run = fallback; extraArgs = fallbackArgs }
   }
-  if (run.code !== 0) throw new Error(run.stderr || '解析失败')
+  if (run.code !== 0) throw new Error((run.stderr || '解析失败') + cookieFailureHint(run.failedBrowsers))
 
   if (extraArgs.length) extractorArgsByUrl.set(url, extraArgs)
   else extractorArgsByUrl.delete(url)

@@ -6,6 +6,8 @@ interface ErrorModalState {
   title: string
   message: string
   detail: string
+  /** 可操作的解决建议，醒目展示（不折叠） */
+  hint: string
 }
 
 const state = ref<ErrorModalState>({
@@ -14,6 +16,7 @@ const state = ref<ErrorModalState>({
   title: '',
   message: '',
   detail: '',
+  hint: '',
 })
 
 function showModal(options: {
@@ -21,6 +24,7 @@ function showModal(options: {
   title?: string
   message: string
   detail?: string
+  hint?: string
 }) {
   state.value = {
     visible: true,
@@ -28,11 +32,12 @@ function showModal(options: {
     title: options.title || '',
     message: options.message,
     detail: options.detail || '',
+    hint: options.hint || '',
   }
 }
 
-function showError(message: string, detail?: string) {
-  showModal({ type: 'error', message, detail })
+function showError(message: string, detail?: string, hint?: string) {
+  showModal({ type: 'error', message, detail, hint })
 }
 
 function showWarning(message: string, detail?: string) {

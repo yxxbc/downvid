@@ -203,7 +203,9 @@ export const useDownloadStore = defineStore('download', () => {
         console.error('Failed to add history record:', historyErr)
       }
     } catch (e: any) {
-      let errorMsg = e.message || '下载失败'
+      // 主进程可能附带 Cookie 读取失败的解决建议：分类只看错误本身，建议保留展示
+      const [rawError, hint] = (e.message || '下载失败').split('\n\n提示：')
+      let errorMsg = rawError
       if (errorMsg.includes('disk') || errorMsg.includes('space')) errorMsg = '磁盘空间不足'
       else if (errorMsg.includes('permission') || errorMsg.includes('access')) errorMsg = '没有写入权限'
       else if (errorMsg.includes('network') || errorMsg.includes('timeout') || errorMsg.includes('ECONNRESET')) errorMsg = '网络连接中断'
@@ -212,7 +214,7 @@ export const useDownloadStore = defineStore('download', () => {
       const errorIdx = downloadTasks.value.findIndex(t => t.id === task.id)
       if (errorIdx !== -1) {
         downloadTasks.value[errorIdx].status = 'error'
-        downloadTasks.value[errorIdx].error = errorMsg
+        downloadTasks.value[errorIdx].error = hint ? `${errorMsg}（${hint}）` : errorMsg
       }
     } finally {
       if (taskProgressCleanups.has(task.id)) {

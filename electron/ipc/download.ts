@@ -3,7 +3,7 @@ import { spawn, exec } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { getYtDlpPath, getFfmpegPath, checkJsRuntime } from '../utils/binary'
-import { getCookieAttempts, runWithCookies } from '../utils/cookies'
+import { getCookieAttempts, runWithCookies, cookieFailureHint } from '../utils/cookies'
 import { isDouyinUrl, isKuaishouUrl, ensureDownloadDir } from '../utils/platform'
 import { parseDouyinWithAPI, parseDouyinWithPuppeteer } from '../parsers/douyin'
 import { parseKuaishouWithAPI, parseKuaishouWithPuppeteer } from '../parsers/kuaishou'
@@ -384,7 +384,7 @@ export function registerDownloadIpc() {
 
     // 复用解析时的 cookie 快照，与解析保持一致且省去浏览器解密
     const cookieAttempts = () => getCookieAttempts(options.cookiesFile, true)
-    let result: { code: number | null; stderr: string }
+    let result: { code: number | null; stderr: string; failedBrowsers: string[] }
     try {
       if (!isSubtitleOnly && useInfoJson(options.cacheFile)) {
         // 直接使用解析得到的 info JSON，跳过 yt-dlp 二次提取（YouTube 可省 5~15 秒）
@@ -409,7 +409,7 @@ export function registerDownloadIpc() {
       if (lastError.includes('429') || lastError.includes('Too Many Requests')) {
         throw new Error('请求过于频繁，请等待几分钟后重试 (HTTP 429)')
       }
-      throw new Error(lastError || '下载失败')
+      throw new Error((lastError || '下载失败') + cookieFailureHint(result.failedBrowsers))
     }
 
     if (downloadedFile) cleanupLeftovers(downloadedFile)
