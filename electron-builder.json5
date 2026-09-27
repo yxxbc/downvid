@@ -81,10 +81,13 @@
     "target": ["AppImage", "deb", "rpm", "tar.gz"],
     "artifactName": "${productName}-${arch}-Linux-${version}.${ext}",
     "category": "Utility",
+    // electron-builder 26 起 .desktop 条目需放在 desktop.entry 下
     "desktop": {
-      "Name": "DownVid",
-      "Comment": "全平台视频下载工具",
-      "Categories": "Utility;AudioVideo;Network;"
+      "entry": {
+        "Name": "DownVid",
+        "Comment": "全平台视频下载工具",
+        "Categories": "Utility;AudioVideo;Network;"
+      }
     }
   },
 
